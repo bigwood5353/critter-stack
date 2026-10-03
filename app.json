@@ -210,6 +210,12 @@
           }
         }
       ]
-    ]
+    ],
+    "owner": "bigwood53",
+    "extra": {
+      "eas": {
+        "projectId": "82a776c7-3625-4f4c-a466-0b9144691cbf"
+      }
+    }
   }
 }
