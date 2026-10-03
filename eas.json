@@ -22,12 +22,12 @@
   "submit": {
     "preview": {
       "ios": {
-        "ascAppId": "REPLACE_WITH_APP_STORE_CONNECT_APP_ID"
+        "ascAppId": "6818896969"
       }
     },
     "production": {
       "ios": {
-        "ascAppId": "REPLACE_WITH_APP_STORE_CONNECT_APP_ID"
+        "ascAppId": "6818896969"
       }
     }
   }

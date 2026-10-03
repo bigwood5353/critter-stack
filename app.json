@@ -13,15 +13,13 @@
     ],
     "ios": {
       "bundleIdentifier": "com.critterstack.app",
-      "buildNumber": "1",
       "supportsTablet": true,
       "requireFullScreen": false,
       "config": {
         "usesNonExemptEncryption": false
       },
       "entitlements": {
-        "com.apple.developer.game-center": true,
-        "com.apple.developer.ubiquity-kvstore-identifier": "$(TeamIdentifierPrefix)$(CFBundleIdentifier)"
+        "com.apple.developer.game-center": true
       },
       "infoPlist": {
         "UISupportedInterfaceOrientations": [
