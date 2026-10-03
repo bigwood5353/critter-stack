@@ -1,0 +1,33 @@
+Achievement ID,Reference name,Title,Description (earned),Description (before earning),Points,Hidden
+com.critterstack.ach.first,First trip home,First trip home,Send any critter home.,Send any critter home.,5,No
+com.critterstack.ach.whole,All in one piece,All in one piece,Send a whole critter home.,Send a whole critter home.,5,No
+com.critterstack.ach.frogs5,Frog chorus,Frog chorus,Send 5 whole frogs home in one game.,Send 5 whole frogs home in one game.,15,No
+com.critterstack.ach.dogs5,Long walk,Long walk,Send 5 whole dachshunds home in one game.,Send 5 whole dachshunds home in one game.,15,No
+com.critterstack.ach.cats5,Cat nap,Cat nap,Send 5 whole cats home in one game.,Send 5 whole cats home in one game.,15,No
+com.critterstack.ach.stampede,Stampede!,Stampede!,Clear 4 rows at once in the tank.,Clear 4 rows at once in the tank.,20,No
+com.critterstack.ach.stampede2,Double stampede,Double stampede,Clear 4 rows at once twice in one game.,Clear 4 rows at once twice in one game.,40,No
+com.critterstack.ach.rows40,Tidy tank,Tidy tank,Clear 40 rows in one game.,Clear 40 rows in one game.,25,No
+com.critterstack.ach.score10k,Five figures,Five figures,"Score 10,000 in one game.","Score 10,000 in one game.",25,No
+com.critterstack.ach.score50k,Head zookeeper,Head zookeeper,"Score 50,000 in one game.","Score 50,000 in one game.",60,No
+com.critterstack.ach.ch60,Quick paws,Quick paws,Last 1:00 in Challenge.,Last 1:00 in Challenge.,20,No
+com.critterstack.ach.ch120,Faster than a fox,Faster than a fox,Last 2:00 in Challenge.,Last 2:00 in Challenge.,50,No
+com.critterstack.ach.speed8,Speed demon,Speed demon,Reach speed 8 in Challenge.,Reach speed 8 in Challenge.,50,No
+com.critterstack.ach.daily,Full tank,Full tank,Place all 100 critters in a Daily tank.,Place all 100 critters in a Daily tank.,35,No
+com.critterstack.ach.streak3,Three in a row,Three in a row,Play the Daily tank 3 days running.,Play the Daily tank 3 days running.,15,No
+com.critterstack.ach.streak7,Week of critters,Week of critters,Play the Daily tank 7 days running.,Play the Daily tank 7 days running.,40,No
+com.critterstack.ach.streak30,Month in the zoo,Month in the zoo,Play the Daily tank 30 days running.,Play the Daily tank 30 days running.,80,No
+com.critterstack.ach.cross,Crossroads,Crossroads,Clear a row and a column with one move in the pen.,Clear a row and a column with one move in the pen.,15,No
+com.critterstack.ach.combo5,On a roll,On a roll,Reach combo ×5 in the pen.,Reach combo ×5 in the pen.,30,No
+com.critterstack.ach.pen3k,Pen pal,Pen pal,"Score 3,000 in the Critter pen.","Score 3,000 in the Critter pen.",30,No
+com.critterstack.ach.levels5,Puzzle solver,Puzzle solver,Solve 5 puzzles.,Solve 5 puzzles.,25,No
+com.critterstack.ach.levelsAll,Master keeper,Master keeper,Solve every puzzle.,Solve every puzzle.,60,No
+com.critterstack.ach.gold1,Struck gold,Struck gold,Send a golden critter home whole.,Send a golden critter home whole.,15,No
+com.critterstack.ach.gold5,Gold rush,Gold rush,Send 5 golden critters home whole.,Send 5 golden critters home whole.,45,No
+com.critterstack.ach.buddies10,Best buddies,Best buddies,Make 10 buddy pairs in one game.,Make 10 buddy pairs in one game.,25,No
+com.critterstack.ach.all7,Full menagerie,Full menagerie,Send every kind of critter home whole in one game.,Send every kind of critter home whole in one game.,45,No
+com.critterstack.ach.home100,Hundred homes,Hundred homes,Send 100 critters home in total.,Send 100 critters home in total.,20,No
+com.critterstack.ach.home1000,Thousand homes,Thousand homes,"Send 1,000 critters home in total.","Send 1,000 critters home in total.",60,No
+com.critterstack.ach.look,New look,New look,Unlock a new look for any critter.,Unlock a new look for any critter.,10,No
+com.critterstack.ach.crown,Royalty,Royalty,Unlock a crown (send 175 of one kind home).,Unlock a crown (send 175 of one kind home).,50,No
+com.critterstack.ach.nohold,No take-backs,No take-backs,Clear 20 rows in one game without skipping.,Clear 20 rows in one game without skipping.,35,No
+com.critterstack.ach.goals5,Goal getter,Goal getter,Finish 5 daily goals.,Finish 5 daily goals.,20,No
