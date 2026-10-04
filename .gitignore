@@ -1,11 +1,12 @@
 node_modules/
 .expo/
 dist/
-ios/
-android/
+/ios/
+/android/
 *.p8
 *.p12
 *.mobileprovision
 .env*
 web/Fredoka.ttf
 web/Fredoka-OFL.txt
+*.zip
