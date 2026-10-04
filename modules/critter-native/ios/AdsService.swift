@@ -25,14 +25,18 @@ import UserMessagingPlatform
 final class AdsService: NSObject {
     private unowned let bridge: GameBridge
 
-    // Ad unit IDs. Debug builds use Google's official test units (safe to tap). Replace the release IDs with
-    // your own from AdMob › Apps › Critter Stack › Ad units before you submit.
+    // Ad unit IDs. Put your own from AdMob › Apps › Critter Stack › Ad units here before you submit to the App Store.
+    // Until then, every build (including TestFlight) uses Google's official test units, which always fill and are safe to tap.
+    private static let myInterstitialUnit = "ca-app-pub-XXXXXXXXXXXXXXXX/IIIIIIIIII"   // TODO: your Interstitial ad unit ID
+    private static let myRewardedUnit     = "ca-app-pub-XXXXXXXXXXXXXXXX/RRRRRRRRRR"   // TODO: your Rewarded ad unit ID
+    private static let testInterstitial  = "ca-app-pub-3940256099942544/4411468910"
+    private static let testRewarded      = "ca-app-pub-3940256099942544/1712485313"
     #if DEBUG
-    private let interstitialUnit = "ca-app-pub-3940256099942544/4411468910"
-    private let rewardedUnit     = "ca-app-pub-3940256099942544/1712485313"
+    private let interstitialUnit = AdsService.testInterstitial
+    private let rewardedUnit     = AdsService.testRewarded
     #else
-    private let interstitialUnit = "ca-app-pub-XXXXXXXXXXXXXXXX/IIIIIIIIII"   // TODO: your Interstitial ad unit ID
-    private let rewardedUnit     = "ca-app-pub-XXXXXXXXXXXXXXXX/RRRRRRRRRR"   // TODO: your Rewarded ad unit ID
+    private let interstitialUnit = AdsService.myInterstitialUnit.contains("XXXX") ? AdsService.testInterstitial : AdsService.myInterstitialUnit
+    private let rewardedUnit     = AdsService.myRewardedUnit.contains("XXXX") ? AdsService.testRewarded : AdsService.myRewardedUnit
     #endif
 
     private var started = false
