@@ -101,7 +101,7 @@ The ad code is written: `CritterStack/AdsService.swift`. It shows an interstitia
    - `SKAdNetworkItems`: Google's list. Copy it from AdMob's iOS "Get started" page.
 5. **Consent form:** in AdMob › Privacy & messaging, create a **European regulations (GDPR)** message for iOS and publish it. That is the consent form shown to EU/UK players. Settings in the game has an **Ad privacy choices** button so they can change it later.
 6. **Content rating:** in AdMob › Blocking controls, set the maximum ad content rating to **G** (general audiences).
-7. **Test on a device:** start a few games until an interstitial appears (the first 15 games are ad-free; after that one plays about every 3 games of at least 45 seconds, never closer than 3 minutes apart). Then watch a rewarded ad from the Store or the out-of-lives screen. Close one early and check that it gives nothing.
+7. **Test on a device:** start a few games until an interstitial appears (the first 8 games are ad-free; after that one plays about every 3 games of at least 45 seconds, never closer than 3 minutes apart). Then watch a rewarded ad from the Store or the out-of-lives screen. Close one early and check that it gives nothing.
 
 ## 5. Privacy
 

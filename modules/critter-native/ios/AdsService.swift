@@ -25,10 +25,10 @@ import UserMessagingPlatform
 final class AdsService: NSObject {
     private unowned let bridge: GameBridge
 
-    // Ad unit IDs. Put your own from AdMob › Apps › Critter Stack › Ad units here before you submit to the App Store.
-    // Until then, every build (including TestFlight) uses Google's official test units, which always fill and are safe to tap.
-    private static let myInterstitialUnit = "ca-app-pub-XXXXXXXXXXXXXXXX/IIIIIIIIII"   // TODO: your Interstitial ad unit ID
-    private static let myRewardedUnit     = "ca-app-pub-XXXXXXXXXXXXXXXX/RRRRRRRRRR"   // TODO: your Rewarded ad unit ID
+    // Ad unit IDs from AdMob › Apps › Critter Stack › Ad units. Debug builds always use Google's test units.
+    // Release builds (TestFlight and the App Store) use the real ones. Add your iPhone under AdMob › Settings › Test devices.
+    private static let myInterstitialUnit = "ca-app-pub-4757265288772810/6644443084"   // Critter Stack · Between games
+    private static let myRewardedUnit     = "ca-app-pub-4757265288772810/3311702737"   // Critter Stack · Free life, skip or undo
     private static let testInterstitial  = "ca-app-pub-3940256099942544/4411468910"
     private static let testRewarded      = "ca-app-pub-3940256099942544/1712485313"
     #if DEBUG

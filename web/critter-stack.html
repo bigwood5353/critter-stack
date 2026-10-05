@@ -2375,7 +2375,7 @@ function copyShare(){
    Games under 45 seconds don't count; a puzzle attempt counts as a third of a game.
    In the app a native handler at window.webkit.messageHandlers.ads shows a real interstitial
    and calls window.critterAdDone() when it closes. */
-const AD_GRACE=15, AD_EVERY=3, AD_GAP=180000, AD_MIN_GAME=45000;
+const AD_GRACE=8, AD_EVERY=3, AD_GAP=180000, AD_MIN_GAME=45000;
 let gameStart=0;
 function adState(){ return PR.ads||(PR.ads={games:0,since:0,last:0,shown:0}); }
 function countGame(){
@@ -2883,26 +2883,49 @@ let sw=null, dragHold=false;
 function followDrag(){
   if(!sw||!cur||clearing) return;
   if(sw.cur!==cur){ sw.cur=cur; sw.ax=sw.lx; sw.ay=sw.ly; sw.col=cur.x; sw.row=cur.y; return; }  // a new critter: re-anchor
-  const tc=sw.col+Math.round((sw.lx-sw.ax)/S); let guard=COLS;
-  while(cur.x!==tc&&guard--){ if(!move(Math.sign(tc-cur.x))) break; }
+  let guard=COLS;
+  if(sw.lockCol==null){ const tc=sw.col+Math.round((sw.lx-sw.ax)/S);   // once a flick starts, sideways drift no longer steers
+    while(cur.x!==tc&&guard--){ if(!move(Math.sign(tc-cur.x))) break; } }
   const tr=sw.row+Math.max(0,Math.floor((sw.ly-sw.ay)/S)); guard=ROWS;
   while(cur.y<tr&&guard--){ if(collide(cur.t,cur.rot,cur.x,cur.y+1)) break; leavePrints(cur.t,cur.rot,cur.x,cur.y,1); cur.y++; score+=1; }
 }
 function endDrag(){ sw=null; dragHold=false; soft=false; dropAcc=0; lockT=0; board.classList.remove('dragging'); }
 board.addEventListener('pointerdown',e=>{ if(view==='pen'){ penDown(e); return; } if(!live()||!cur) return;
-  sw={x0:e.clientX,y0:e.clientY,t:performance.now(),moved:false,ax:e.clientX,ay:e.clientY,lx:e.clientX,ly:e.clientY,cur,col:cur.x,row:cur.y};
-  dragHold=true; board.setPointerCapture(e.pointerId); board.classList.add('dragging'); });
+  sw={x0:e.clientX,y0:e.clientY,t:performance.now(),moved:false,ax:e.clientX,ay:e.clientY,lx:e.clientX,ly:e.clientY,cur,col:cur.x,row:cur.y,
+      hist:[{t:performance.now(),x:e.clientX,y:e.clientY,col:cur.x}], lockCol:null};
+  dragHold=true; try{ board.setPointerCapture(e.pointerId); }catch(_){} board.classList.add('dragging'); });
 board.addEventListener('pointermove',e=>{ if(view==='pen'){ penMove(e); return; } if(!sw) return;
   if(!live()){ endDrag(); return; }
   if(Math.abs(e.clientX-sw.x0)>8||Math.abs(e.clientY-sw.y0)>8) sw.moved=true;
-  sw.lx=e.clientX; sw.ly=e.clientY; followDrag(); updateStats();
+  const now=performance.now(); sw.lx=e.clientX; sw.ly=e.clientY;
+  // A flick is a fast, mostly-downward stroke. Thumbs curl sideways as they finish one, so when it starts we pin the
+  // critter to the column it was in just before the flick began, and ignore the sideways drift from then on.
+  if(sw.lockCol==null&&e.pointerType!=='mouse'){ const f=flickStart(now,e.clientX,e.clientY); if(f) pinColumn(f.col); }
+  else if(sw.lockCol!=null){ const back=sw.hist.find(h=>now-h.t<=120);   // the thumb stopped without letting go: steering comes back
+    if(back&&now-back.t>=60&&Math.hypot(e.clientX-back.x,e.clientY-back.y)<S*.4){ sw.lockCol=null; sw.ax=e.clientX; sw.col=cur.x; } }
+  followDrag();
+  if(cur===sw.cur) sw.hist.push({t:now,x:e.clientX,y:e.clientY,col:cur.x});
+  while(sw.hist.length>2&&now-sw.hist[0].t>250) sw.hist.shift();
+  updateStats();
 });
+// the sample where a fast downward stroke began (within the last 160 ms), or null if this isn't a flick
+function flickStart(now,x,y){
+  let first=null; for(const h of sw.hist){ if(now-h.t<=160){ first=h; break; } }
+  if(!first||now-first.t<16) return null;
+  const dy=y-first.y, dx=x-first.x, v=dy/(now-first.t);
+  return (dy>S*.9 && v>.55 && Math.abs(dx)<dy*.7) ? first : null;
+}
+function pinColumn(col){ sw.lockCol=col; let g=COLS; while(cur&&cur.x!==col&&g--){ if(!move(Math.sign(col-cur.x))) break; } }
 board.addEventListener('pointerup',e=>{ if(view==='pen'){ penUp(e); return; } if(!sw) return;
-  const dt=performance.now()-sw.t, dx=e.clientX-sw.x0, dy=e.clientY-sw.y0, wasMoved=sw.moved, touch=e.pointerType!=='mouse';
+  const now=performance.now(), dt=now-sw.t, dx=e.clientX-sw.x0, dy=e.clientY-sw.y0, wasMoved=sw.moved, touch=e.pointerType!=='mouse';
+  // a flick can also come at the end of a slow drag: judge it on the last stretch of the stroke, not from the first touch
+  const f = touch && sw.cur===cur ? (sw.lockCol!=null ? {col:sw.lockCol} : flickStart(now,e.clientX,e.clientY)) : null;
+  const whole = touch && dy>S*2 && Math.abs(dx)<dy*.35 && dy/dt>0.9;
+  if(f&&sw.lockCol==null) pinColumn(f.col);
   endDrag();
   if(!live()) return;
   if(!wasMoved&&dt<300) rotate(1);
-  else if(touch && dy>S*2 && Math.abs(dx)<dy*.35 && dy/dt>0.9) hardDrop();  // quick, straight flick down (touch only; Space covers keyboards)
+  else if(f||whole) hardDrop();  // quick flick down (touch only; Space covers keyboards), dropped in the column it started from
 });
 board.addEventListener('pointercancel',()=>{ if(sw) endDrag(); if(drag){ drag=null; board.classList.remove('dragging'); } });
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&live()) togglePause(); });

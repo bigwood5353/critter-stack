@@ -52,13 +52,13 @@ Paste these into App Store Connect › your app › App Store tab. Character lim
 >
 > Free to play, with optional ads. Every game uses a life; you hold up to 5 and one comes back every 20 minutes, and your first Daily stack try each day is free. Watch a short ad for a life, or grab a refill, an hour of unlimited play, the ad-free upgrade, the whole zoo, or extra skips and undos in the store. Restore purchases anytime.
 >
-> Privacy policy: [YOUR PRIVACY URL]
+> Privacy policy: https://woodinteractive.app/critter-stack/privacy
 > Terms of use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 
 ## What's New (version 1.0)
 
-> Welcome to Critter Stack! Stack, clear, collect and race the world in the Daily stack. We'd love your feedback: Settings › How to play has tips, and you can reach us at [SUPPORT EMAIL].
+> Welcome to Critter Stack! Stack, clear, collect and race the world in the Daily stack. We'd love your feedback: Settings › How to play has tips, and you can reach us at support@woodinteractive.app.
 
 ## Screenshots to upload
 
@@ -76,9 +76,9 @@ Only the first three show in search results, so the order above leads with gamep
 
 ## Other fields
 
-- **Support URL:** where you host `support.html`
-- **Marketing URL:** optional
-- **Privacy Policy URL:** where you host `privacy-policy.html`
-- **Copyright:** © 2026 [YOUR NAME OR COMPANY]
+- **Support URL:** https://woodinteractive.app/critter-stack/support
+- **Marketing URL:** https://woodinteractive.app
+- **Privacy Policy URL:** https://woodinteractive.app/critter-stack/privacy
+- **Copyright:** © 2026 Matthew Wood
 - **App Review contact and notes:** see section 7 of the app README. No sign-in is needed, so leave "Sign-in required" unchecked.
 - **Price:** Free. In-app purchases: attach all eleven to the first version.
