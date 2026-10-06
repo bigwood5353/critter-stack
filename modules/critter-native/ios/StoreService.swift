@@ -3,13 +3,15 @@ import UIKit
 
 /// StoreKit 2 purchases. Product IDs must match App Store Connect exactly.
 ///   Consumable:     com.critterstack.skips5 / skips15 / skips40, com.critterstack.undos5 / undos15 / undos40,
-///                   com.critterstack.lives5 (refill), com.critterstack.lives1h (1 hour unlimited)
+///                   com.critterstack.lives5 (refill), com.critterstack.lives1h (1 hour unlimited),
+///                   com.critterstack.turns5 / turns15 / turns40 (Critter Pen turns)
 ///   Non-consumable: com.critterstack.noads, com.critterstack.zoo, com.critterstack.bundle
 @MainActor
 final class StoreService {
     static let consumables: Set<String> = ["com.critterstack.skips5", "com.critterstack.skips15", "com.critterstack.skips40",
                                            "com.critterstack.undos5", "com.critterstack.undos15", "com.critterstack.undos40",
-                                           "com.critterstack.lives5", "com.critterstack.lives1h"]
+                                           "com.critterstack.lives5", "com.critterstack.lives1h",
+                                           "com.critterstack.turns5", "com.critterstack.turns15", "com.critterstack.turns40"]
     static let unlocks: Set<String> = ["com.critterstack.noads", "com.critterstack.zoo", "com.critterstack.bundle"]
     static var all: Set<String> { consumables.union(unlocks) }
 

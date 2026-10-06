@@ -231,6 +231,8 @@
   @keyframes popIn{ from{ transform: scale(.55); opacity:0; } to{ transform:none; opacity:1; } }
   @media (prefers-reduced-motion: reduce){ .stk-pop .pop{ animation:none; } }
   .gcname{ font-weight:700; color:var(--ink); max-width:45%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .turnchip{ font:700 15px/1 var(--font); color:#fff; background:#5B7FE0; border:0; border-radius:999px; padding:4px 10px 5px; box-shadow:0 2px 0 #34509E; cursor:pointer; }
+  .turntok{ display:none; } [data-view="pen"] .turntok{ display:inline-flex; } [data-view="pen"] .tok[title="Skips"], [data-view="pen"] .tok[title="Undos"]{ display:none; }
   .lvls{ display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; margin:0 0 12px; }
   .lvls button{ font-family: var(--font); font-weight:700; font-size:18px; color: var(--btn-ink); aspect-ratio:1; border:3px solid var(--line); border-radius:14px; box-shadow:0 3px 0 var(--line); background: linear-gradient(180deg, rgba(255,255,255,.75) 0 38%, rgba(255,255,255,0) 38.5%), var(--blue); cursor:pointer; position:relative; }
   .lvls button.done{ background: linear-gradient(180deg, rgba(255,255,255,.75) 0 38%, rgba(255,255,255,0) 38.5%), var(--green); }
@@ -724,7 +726,7 @@
 
   <main class="game">
     <div class="sidecol" id="sideCol"><button type="button" class="sidebuy" id="sideBuy" aria-label="Get more skips and undos">+</button></div>
-    <section class="panel hold-panel"><h2>Tokens</h2><div class="skipbox"><div class="toks"><span class="tok" title="Skips"><i aria-hidden="true">⏭</i><span class="skipn" id="skipN">3</span></span><span class="tok" title="Undos"><i aria-hidden="true">↶</i><span class="skipn" id="undoN">3</span></span></div><button type="button" class="buyskip" id="buySkip" aria-label="Open the store">+</button></div><canvas id="holdCv" hidden></canvas></section>
+    <section class="panel hold-panel"><h2>Tokens</h2><div class="skipbox"><div class="toks"><span class="tok" title="Skips"><i aria-hidden="true">⏭</i><span class="skipn" id="skipN">3</span></span><span class="tok" title="Undos"><i aria-hidden="true">↶</i><span class="skipn" id="undoN">3</span></span><span class="tok turntok" title="Turns"><i aria-hidden="true">↻</i><span class="skipn" id="turnN">3</span></span></div><button type="button" class="buyskip" id="buySkip" aria-label="Open the store">+</button></div><canvas id="holdCv" hidden></canvas></section>
     <section class="panel zoo"><h2>The menagerie</h2><p class="sub">Sent home this game</p><ul id="zooList"></ul></section>
     <div class="well" id="well">
       <canvas id="board" aria-label="Game board"></canvas><span class="post tl" aria-hidden="true"></span><span class="post tr" aria-hidden="true"></span>
@@ -750,11 +752,13 @@
         <dt id="tLevel">Level</dt><dd id="sLevel">1</dd>
         <dt>Home</dt><dd id="sHome">0</dd>
         <dt id="tLeft" hidden>Left</dt><dd id="sLeft" hidden>100</dd>
+        <dt id="tTurns" hidden>Turns</dt><dd id="sTurns" hidden><button type="button" class="turnchip" id="turnChip" aria-label="Turns: open the store">↻ 3</button></dd>
         <dt class="best">Best</dt><dd class="best" id="sBest">0</dd>
       </dl>
     </section>
     <section class="panel howto"><h2>Critter Pen</h2>
       <p>Drag any of the three critters into the pen. Fill a row or a column and everyone in it goes home.</p>
+      <p>Tap a critter twice to spend a ↻ Turn. It stays unlocked until you place it, so tap it to spin it as often as you like.</p>
       <p>Clear several lines in one move for more points. Keep clearing move after move to build a combo. Three in a row starts Fever: the board glows and clears score extra until a move clears nothing. When none of your three fit, the pen is full.</p>
     </section>
     <section class="panel keys"><h2>Controls</h2>
@@ -2226,7 +2230,10 @@ let lastHard=false;
 let dropPts=0;
 function hardDrop(){ if(!cur||clearing) return; const gy=ghostY(); dropPts=2*(gy-cur.y); leavePrints(cur.t,cur.rot,cur.x,cur.y,gy-cur.y); score+=2*(gy-cur.y); cur.y=gy; sfx('drop'); buzz(18); shake(3.5); lastHard=true; lockPiece(); }
 /* ---------- skips: toss the current critter and bring in the next one ---------- */
-const START_SKIPS=3, START_UNDOS=3;
+const START_SKIPS=3, START_UNDOS=3, START_TURNS=3;
+// Turns (Critter Pen only): one token unlocks a tray critter so it can be turned as often as you like until it's placed
+function turnsLeft(){ return PR.turns==null ? START_TURNS : PR.turns; }
+function setTurns(n){ PR.turns=Math.max(0,n|0); saveP(); updateSkipUI(); }
 function skipsLeft(){ return PR.skips==null ? START_SKIPS : PR.skips; }
 function setSkips(n){ PR.skips=Math.max(0,n|0); saveP(); updateSkipUI(); }
 function undosLeft(){ return PR.undos==null ? START_UNDOS : PR.undos; }
@@ -2255,6 +2262,8 @@ function updateSkipUI(){
   const pb=$('padSkipN'); pb.textContent= n ? n : '+'; pb.parentElement.classList.toggle('empty',!n);
   const u=undosLeft(), ue=$('undoN'); ue.textContent=u; ue.classList.toggle('zero',!u);
   const pu=$('padUndoN'); pu.textContent= u ? u : '+'; pu.parentElement.classList.toggle('empty',!u);
+  const tn=turnsLeft(), te=$('turnN'); if(te){ te.textContent=tn; te.classList.toggle('zero',!tn); }
+  const tc=$('turnChip'); if(tc) tc.textContent=tn?`↻ ${tn}`:'↻ +';
 }
 function doHold(){ doSkip(); }
 function doSkip(){
@@ -2432,11 +2441,11 @@ function canReward(){ return nativeAds() ? adsReady : DEV; }
 let rewardReturn=null;
 function grantReward(kind){
   const st=rewardState(); st.n++; const a=adState(); a.last=Date.now(); saveP();   // no forced ad right after a rewarded one
-  if(kind==='life') addLives(1); else if(kind==='undo') setUndos(undosLeft()+1); else setSkips(skipsLeft()+1);
-  sfx('gold'); celebrate({icon:kind==='life'?'❤️':kind==='undo'?'↶':'⏭️', title:`+1 ${kind}!`, sub:`Thanks for watching · ${rewardsLeft()} free ${rewardsLeft()===1?'reward':'rewards'} left today`, color:kind==='life'?'#FF4F7A':kind==='undo'?'#FFB547':'#4FD8C0'});
+  if(kind==='life') addLives(1); else if(kind==='undo') setUndos(undosLeft()+1); else if(kind==='turn') setTurns(turnsLeft()+1); else setSkips(skipsLeft()+1);
+  sfx('gold'); celebrate({icon:kind==='life'?'❤️':kind==='undo'?'↶':kind==='turn'?'↻':'⏭️', title:`+1 ${kind}!`, sub:`Thanks for watching · ${rewardsLeft()} free ${rewardsLeft()===1?'reward':'rewards'} left today`, color:kind==='life'?'#FF4F7A':kind==='undo'?'#FFB547':kind==='turn'?'#7FA8FF':'#4FD8C0'});
   const r=rewardReturn; rewardReturn=null; if(r) setTimeout(r,250);
 }
-window.critterRewarded=kind=>grantReward(kind==='undo'||kind==='life'?kind:'skip');
+window.critterRewarded=kind=>grantReward(kind==='undo'||kind==='life'||kind==='turn'?kind:'skip');
 window.critterRewardFailed=msg=>{ toast(msg||"No ad is available right now. Try again in a bit."); const r=rewardReturn; rewardReturn=null; if(r) r(); };
 function watchForReward(kind,back){
   if(!rewardsLeft()){ toast('That\'s all the free rewards for today. More tomorrow!'); return; }
@@ -2967,6 +2976,7 @@ function applyModeUI(){
   $('statsHead').textContent = {daily:`Daily #${dailyNum()} · Try ${Math.min(DAILY_TRIES,dailyState().tries||1)}/${DAILY_TRIES}`, puzzle:'Critter Pen', challenge:'Challenge', levels:`Puzzle ${levelIdx+1} · ${'🐾'.repeat(LEVELS[levelIdx].d||1)}`}[mode] || 'Score';
   $('tLeft').textContent = mode==='puzzle' ? 'Combo' : mode==='challenge' ? 'Time' : mode==='levels' ? 'Rocks left' : 'Left';
   $('tLeft').hidden = $('sLeft').hidden = mode==='classic';
+  $('tTurns').hidden = $('sTurns').hidden = mode!=='puzzle';
   $('tLevel').textContent = mode==='challenge' ? 'Speed' : 'Level';
   $('tLevel').hidden = $('sLevel').hidden = pen;
   $('tLines').textContent = pen ? 'Lines' : 'Rows';
@@ -3045,7 +3055,41 @@ function place(i,gx,gy){
     else if(!tray.some(pc=>pc&&fitsAnywhere(pc))){ penEnding=true; setTimeout(()=>{ if(penEnding) levelFail(false); },700); }
     return;
   }
-  if(!tray.some(pc=>pc&&fitsAnywhere(pc))){ penEnding=true; setTimeout(()=>{ if(penEnding) endGame(false); },700); }
+  penCheckStuck();
+}
+// ---- Turns in the Critter Pen ----
+let turnResume=null, turnArm=null;
+const canTurn=pc=>!!pc&&pc.t!=='O';
+function turned(pc){ const np=makePiece(pc.t,(pc.rot+1)%4); np.gold=pc.gold; np.turnable=true; return np; }
+function fitsTurned(pc){ for(let r=0;r<4;r++) if(fitsAnywhere(makePiece(pc.t,r))) return true; return false; }
+// none of the three fit as they are: keep going if a turned critter would fit, otherwise the game is over
+function penCheckStuck(){
+  if(mode!=='puzzle'||!running||over) return;
+  if(tray.some(pc=>pc&&fitsAnywhere(pc))) return;
+  if(tray.some(pc=>pc&&pc.turnable&&fitsTurned(pc))){ popups.push({text:'Turn it to fit!', sub:'Tap your turnable critter', y:PN-1.5, t:0, size:.5}); return; }
+  if(tray.some(pc=>canTurn(pc)&&fitsTurned(pc))){ penEnding=true; setTimeout(()=>{ if(penEnding){ penEnding=false; penStuck(); } },700); return; }
+  penEnding=true; setTimeout(()=>{ if(penEnding) endGame(false); },700);
+}
+function penStuck(){
+  const n=turnsLeft(), back=()=>{ hideOverlay(); popups.push({text:'Tap a critter twice', sub:'to turn it', y:PN-1.5, t:0, size:.5}); };
+  const btns=[];
+  if(n) btns.push({label:`Use a turn · ${n}`,cls:'big small pen',fn:back});
+  else btns.push({label:'Get turns',cls:'big small pen',fn:()=>{ turnResume=back; openStore('turns',true); }});
+  if(canReward()&&rewardsLeft()) btns.push({label:'▶ Free turn',cls:'big small alt',fn:()=>watchForReward('turn',back)});
+  btns.push({label:'End game',cls:'big small ghost',fn:()=>endGame(false)});
+  showOverlay({eyebrow:'Critter Pen', title:'Stuck!', text:`None of your critters fit the way they're facing, but a turned one would. ${score.toLocaleString()} points so far.${canReward()&&rewardsLeft()?' Watch a short ad for a free turn.':''}`, noRemember:true, buttons:btns});
+}
+function trayTap(i){
+  const pc=tray[i]; if(!pc||mode!=='puzzle'||!running||over||penEnding) return;
+  if(!canTurn(pc)){ toast('Frogs look the same whichever way they face!'); return; }
+  if(pc.turnable){ tray[i]=turned(pc); sfx('rotate'); buzz(8); return; }
+  if(turnsLeft()<=0){ turnResume=()=>{ if(!overlay.hidden) hideOverlay(); }; openStore('turns'); return; }
+  if(!turnArm||turnArm.i!==i||Date.now()-turnArm.t>2500){ turnArm={i,t:Date.now()};
+    for(let k=popups.length-1;k>=0;k--) if(popups[k].turn) popups.splice(k,1);
+    popups.push({turn:true, text:'Tap again to turn', sub:`Uses 1 turn · ${plural(turnsLeft(),'turn')} left`, y:PN-1.2, t:0, size:.5}); return; }
+  turnArm=null; setTurns(turnsLeft()-1); G.usedHold=true; tray[i]=turned(pc); sfx('rotate'); buzz(12);
+  for(let k=popups.length-1;k>=0;k--) if(popups[k].turn) popups.splice(k,1);
+  popups.push({turn:true, text:'Unlocked!', sub:'Tap it to keep turning', y:PN-1.2, t:0, size:.5});
 }
 function penGameOver(quit, extra, rl){
   penEnding=false;
@@ -3063,8 +3107,8 @@ function penDown(e){
   if(!running||over||penEnding) return;
   const {x,y}=pt(e); if(y<P*PN) return;
   const i=Math.min(2,Math.floor(x/slotW())); if(!tray[i]) return;
-  drag={i,piece:tray[i],px:x,py:y,lift:e.pointerType==='mouse'?0:P*1.5,valid:false};
-  board.setPointerCapture(e.pointerId); board.classList.add('dragging'); penMove(e);
+  drag={i,piece:tray[i],px:x,py:y,sx:x,sy:y,t0:Date.now(),lift:e.pointerType==='mouse'?0:P*1.5,valid:false};
+  try{ board.setPointerCapture(e.pointerId); }catch(_){} board.classList.add('dragging'); penMove(e);
 }
 function penMove(e){
   if(!drag) return; const {x,y}=pt(e); const pc=drag.piece;
@@ -3072,7 +3116,9 @@ function penMove(e){
   drag.gx=Math.round((x-pc.w*P/2)/P); drag.gy=Math.round((y-drag.lift-pc.h*P/2)/P);
   drag.valid=canPlace(pc,drag.gx,drag.gy);
 }
-function penUp(){ if(!drag) return; const d=drag; drag=null; if(d.valid) hint=null; board.classList.remove('dragging'); if(d.valid) place(d.i,d.gx,d.gy); }
+function penUp(){ if(!drag) return; const d=drag; drag=null; board.classList.remove('dragging');
+  if(Math.hypot(d.px-d.sx,d.py-d.sy)<P*.3&&Date.now()-d.t0<450){ trayTap(d.i); return; }   // a tap, not a drag: turn it
+  if(d.valid) hint=null; if(d.valid) place(d.i,d.gx,d.gy); }
 function drawPiece(c,pc,s,cx,cy,id){ drawCells(c, pc.cells.map(k=>({...k,t:pc.t,id,gold:pc.gold})), s, cx-pc.w*s/2, cy-pc.h*s/2); }
 function renderPen(){
   const c=bc, W=P*PN, BH=P*PN, H=Math.round(P*(PN+TRAY_R));
@@ -3108,7 +3154,10 @@ function renderPen(){
   const ts=P*.56;
   tray.forEach((pc,i)=>{ if(!pc||(drag&&drag.i===i)) return;
     c.globalAlpha = (running&&!fitsAnywhere(pc)) ? .3 : 1;
-    drawPiece(c,pc,ts,(i+.5)*slotW(),BH+(H-BH)/2-(mode==='levels'&&seqPos<seq.length?P*.22:0),'tray'+i); c.globalAlpha=1; });
+    drawPiece(c,pc,ts,(i+.5)*slotW(),BH+(H-BH)/2-(mode==='levels'&&seqPos<seq.length?P*.22:0),'tray'+i); c.globalAlpha=1;
+    if(mode==='puzzle'&&canTurn(pc)){ const bx=(i+1)*slotW()-P*.42, by=BH+P*.42, on=pc.turnable;
+      c.beginPath(); c.arc(bx,by,P*.26,0,Math.PI*2); c.fillStyle=on?'#7FA8FF':'rgba(255,255,255,.12)'; c.fill();
+      c.font=`700 ${Math.round(P*.32)}px system-ui, sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillStyle=on?'#fff':'rgba(255,255,255,.55)'; c.fillText('↻',bx,by+1); } });
   if(mode==='levels'&&seqPos<seq.length){   // the critters still to come, small, along the bottom of the tray
     const ms=P*.2, rest=seq.slice(seqPos), y=H-P*.42, gap=P*.35;
     const widths=rest.map(pc=>pc.w*ms), total=widths.reduce((a,w)=>a+w,0)+gap*(rest.length-1)+P*1.4;
@@ -3547,6 +3596,9 @@ const PRODUCTS={
   'com.critterstack.undos5': {kind:'undos',n:5, price:'$0.99',icon:'↶',col:'#FFB547',title:'5 undos', sub:'Handful'},
   'com.critterstack.undos15':{kind:'undos',n:15,price:'$1.99',icon:'↶',col:'#FFB547',title:'15 undos',sub:'Backpack',tag:'Popular'},
   'com.critterstack.undos40':{kind:'undos',n:40,price:'$3.99',icon:'↶',col:'#FFB547',title:'40 undos',sub:'Basket',tag:'Best value'},
+  'com.critterstack.turns5': {kind:'turns',n:5, price:'$0.99',icon:'↻',col:'#7FA8FF',title:'5 turns', sub:'Handful'},
+  'com.critterstack.turns15':{kind:'turns',n:15,price:'$1.99',icon:'↻',col:'#7FA8FF',title:'15 turns',sub:'Backpack',tag:'Popular'},
+  'com.critterstack.turns40':{kind:'turns',n:40,price:'$3.99',icon:'↻',col:'#7FA8FF',title:'40 turns',sub:'Basket',tag:'Best value'},
   'com.critterstack.lives5': {kind:'lives',n:5,price:'$0.99',icon:'❤️',col:'#FF4F7A',title:'Refill · 5 lives',sub:'Added on top of what you have'},
   'com.critterstack.lives1h':{kind:'livespass',price:'$1.99',icon:'♾️',col:'#FF4F7A',title:'1 hour unlimited',sub:'Play as much as you like for an hour',tag:'Binge'},
   'com.critterstack.noads':  {kind:'noads', price:'$4.99',icon:'🚫',col:'#FF8FC7',title:'No Ads',sub:'Play without interruptions, forever'},
@@ -3561,6 +3613,7 @@ function grant(id){
   const pd=PRODUCTS[id]; if(!pd) return; PR.owned=PR.owned||{};
   if(pd.kind==='skips'){ setSkips(skipsLeft()+pd.n); celebrate({icon:'⏭️',title:`+${pd.n} skips!`,sub:`You have ${skipsLeft()} now`,color:pd.col}); }
   else if(pd.kind==='undos'){ setUndos(undosLeft()+pd.n); celebrate({icon:'↶',title:`+${pd.n} undos!`,sub:`You have ${undosLeft()} now`,color:pd.col}); }
+  else if(pd.kind==='turns'){ setTurns(turnsLeft()+pd.n); celebrate({icon:'↻',title:`+${pd.n} turns!`,sub:`You have ${turnsLeft()} now`,color:pd.col}); if(turnResume){ const r=turnResume; turnResume=null; setTimeout(r,900); return; } }
   else if(pd.kind==='lives'){ addLives(pd.n); celebrate({icon:'❤️',title:`+${pd.n} lives!`,sub:`You have ${livesNow()} now`,color:pd.col}); }
   else if(pd.kind==='livespass'){ PR.livesUntil=Math.max(Date.now(),PR.livesUntil||0)+3600e3; saveP(); updateLivesPills(); celebrate({icon:'♾️',title:'Unlimited lives!',sub:'Play as much as you like for the next hour',color:pd.col,big:true}); }
   else if(pd.kind==='noads'){ PR.owned.noads=true; saveP(); celebrate({icon:'🚫',title:'Ads are gone!',sub:'Thanks for supporting Critter Stack',color:pd.col,big:true}); }
@@ -3607,7 +3660,7 @@ function openStore(focus, keepResume){
     if(running&&!over&&view==='tank'&&!paused){ paused=true; soft=false; das.dir=0; $('pauseBtn').textContent='Resume'; storeResume=true; }
     if(sw) endDrag(); }
   const wrap=document.createElement('div');
-  const w=document.createElement('p'); w.className='wallet'; w.textContent=`You have ${livesUnlimited()?'♾️ unlimited lives':'❤️ '+plural(livesNow(),'life').replace('lifes','lives')}, ⏭ ${plural(skipsLeft(),'skip')} and ↶ ${plural(undosLeft(),'undo')}.`;
+  const w=document.createElement('p'); w.className='wallet'; w.textContent=`You have ${livesUnlimited()?'♾️ unlimited lives':'❤️ '+plural(livesNow(),'life').replace('lifes','lives')}, ⏭ ${plural(skipsLeft(),'skip')}, ↶ ${plural(undosLeft(),'undo')} and ↻ ${plural(turnsLeft(),'turn')}.`;
   wrap.append(w);
   const section=(title,ids)=>{ const h=document.createElement('h3'); h.className='store-h'; h.textContent=title; const list=document.createElement('div'); list.className='store';
     ids.forEach(id=>{ const pd=PRODUCTS[id], have = pd.kind==='noads'?owns('noads') : pd.kind==='zoo'?owns('zoo') : pd.kind==='bundle'?owns('bundle')||(owns('noads')&&owns('zoo')) : false;
@@ -3622,10 +3675,11 @@ function openStore(focus, keepResume){
   const upgrades=()=>section('Upgrades',['com.critterstack.bundle','com.critterstack.noads','com.critterstack.zoo']);
   const skips=()=>section('Skips · toss a critter, get the next',['com.critterstack.skips5','com.critterstack.skips15','com.critterstack.skips40']);
   const undos=()=>section('Undos · lift your last critter back to the top',['com.critterstack.undos5','com.critterstack.undos15','com.critterstack.undos40']);
+  const turns=()=>section('Turns · spin a Critter Pen critter any way you like',['com.critterstack.turns5','com.critterstack.turns15','com.critterstack.turns40']);
   if(canReward()){
     const h=document.createElement('h3'); h.className='store-h'; h.textContent=`Free · watch a short ad (${rewardsLeft()} of ${REWARD_CAP} left today)`;
     const list=document.createElement('div'); list.className='store free2';
-    [['life','❤️','#FF4F7A'],['skip','⏭️','#4FD8C0'],['undo','↶','#FFB547']].forEach(([k,ic,col])=>{
+    [['life','❤️','#FF4F7A'],['skip','⏭️','#4FD8C0'],['undo','↶','#FFB547'],['turn','↻','#7FA8FF']].forEach(([k,ic,col])=>{
       const b=document.createElement('button'); b.type='button'; b.className='pack free';
       const i=document.createElement('span'); i.className='pi'; i.style.setProperty('--c',col); i.textContent=ic;
       const t=document.createElement('span'); const bb=document.createElement('b'); bb.textContent=`+1 ${k}`; const sm=document.createElement('small'); sm.textContent='Watch an ad'; t.append(bb,sm);
@@ -3634,13 +3688,14 @@ function openStore(focus, keepResume){
       list.append(b); });
     wrap.append(h,list);
   }
-  if(focus==='undos'){ undos(); skips(); lives(); upgrades(); } else if(focus==='skips'){ skips(); undos(); lives(); upgrades(); } else if(focus==='lives'){ lives(); upgrades(); skips(); undos(); } else { lives(); upgrades(); skips(); undos(); }
+  if(focus==='turns'){ turns(); lives(); upgrades(); skips(); undos(); } else if(focus==='undos'){ undos(); skips(); turns(); lives(); upgrades(); } else if(focus==='skips'){ skips(); undos(); turns(); lives(); upgrades(); } else if(focus==='lives'){ lives(); upgrades(); skips(); undos(); turns(); } else if(view==='pen'){ turns(); lives(); upgrades(); skips(); undos(); } else { lives(); upgrades(); skips(); undos(); turns(); }
   const rs=document.createElement('button'); rs.type='button'; rs.className='restore'; rs.textContent='Restore purchases'; rs.addEventListener('click',restorePurchases); wrap.append(rs);
   const done=()=>{ if(storeResume&&running&&!over){ paused=false; $('pauseBtn').textContent='Pause'; hideOverlay(); } else if(running&&!over) hideOverlay(); else showStart(); storeResume=false; };
-  showOverlay({eyebrow: focus==='skips'?'Out of skips':focus==='undos'?'Out of undos':focus==='lives'?'Lives':'Critter Stack', title:'Store', text:'', extra:wrap, noRemember:true, buttons:[], back:done,
+  showOverlay({eyebrow: focus==='skips'?'Out of skips':focus==='undos'?'Out of undos':focus==='turns'?'Turns':focus==='lives'?'Lives':'Critter Stack', title:'Store', text:'', extra:wrap, noRemember:true, buttons:[], back:done,
     note: nativeStore()?'':(DEV?'Dev build: purchases are free test grants.':'Purchases are made through the App Store in the Critter Stack app.')});
 }
 $('buySkip').addEventListener('click',()=>openStore(null));
+$('turnChip').addEventListener('click',e=>{ e.stopPropagation(); openStore('turns'); });
 $('sideBuy').addEventListener('click',()=>openStore(null));
 $('rulesBtn').addEventListener('click',e=>{ e.stopPropagation(); showRules(); });
 
@@ -3886,7 +3941,7 @@ function penArt(kind){
   return cv;
 }
 const PEN_TOUR=[
-  {art:'drag', title:'Drag critters in', text:'Pick any of the three critters in the tray and drop it anywhere it fits. Critters can\'t be turned, so look for a good spot.'},
+  {art:'drag', title:'Drag critters in', text:'Pick any of the three critters in the tray and drop it anywhere it fits. Need a different angle? Tap a critter twice to spend a Turn, then tap it to spin it any way you like.'},
   {art:'line', title:'Fill a row or a column', text:'A full row or column clears, and every critter in it goes home. Clear several lines at once for bigger points.'},
   {art:'combo', title:'Keep it going', text:'Clear lines move after move to build a combo. Three in a row starts Fever, and the board glows until a move clears nothing. When none of your three critters fit anywhere, the pen is full and the game ends.'}];
 const PZ_TOUR=[

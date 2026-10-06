@@ -33,7 +33,7 @@ Paste these into App Store Connect › your app › App Store tab. Character lim
 > • Petting Zoo: relax and stack as long as you like
 > • Challenge: the speed ramps up every 20 seconds
 > • Daily Stack: one shared puzzle for everyone, every day
-> • Critter Pen: drag three critters into an 8×8 pen and clear rows or columns
+> • Critter Pen: drag three critters into an 8×8 pen and clear rows or columns (spend a Turn to spin one)
 > • Puzzles: 62 brain-teasers across six chapters, rated Easy to Expert, with hints
 >
 > GROW YOUR ZOO
@@ -49,7 +49,7 @@ Paste these into App Store Connect › your app › App Store tab. Character lim
 > MADE TO FEEL GOOD
 > Squishy landings, nervous critters when the stack gets high, sleepy ones that doze off, happy little sounds and gentle haptics. Choose a wooden-pen, garden-hedge or candy-rope frame, and paw-print landing guides. Plays great offline, on iPhone and iPad, with iCloud backup so your zoo follows you to a new device.
 >
-> Free to play, with optional ads. Every game uses a life; you hold up to 5 and one comes back every 20 minutes, and your first Daily Stack try each day is free. Watch a short ad for a life, or grab a refill, an hour of unlimited play, the ad-free upgrade, the whole zoo, or extra skips and undos in the store. Restore purchases anytime.
+> Free to play, with optional ads. Every game uses a life; you hold up to 5 and one comes back every 20 minutes, and your first Daily Stack try each day is free. Watch a short ad for a life, or grab a refill, an hour of unlimited play, the ad-free upgrade, the whole zoo, or extra skips, undos and turns in the store. Restore purchases anytime.
 >
 > Privacy policy: https://woodinteractive.app/critter-stack/privacy
 > Terms of use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
