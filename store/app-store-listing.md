@@ -18,7 +18,7 @@ Paste these into App Store Connect › your app › App Store tab. Character lim
 
 ## Promotional text (170 max · can be changed anytime without a new build)
 
-> New every day: the Daily stack gives everyone in the world the same 100 critters. Three tries, no skips, pure skill. Can you make the podium?
+> New every day: the Daily Stack gives everyone in the world the same 100 critters. Three tries, no skips, pure skill. Can you make the podium?
 
 ## Description (4,000 max)
 
@@ -32,9 +32,9 @@ Paste these into App Store Connect › your app › App Store tab. Character lim
 > FIVE WAYS TO PLAY
 > • Petting Zoo: relax and stack as long as you like
 > • Challenge: the speed ramps up every 20 seconds
-> • Daily stack: one shared puzzle for everyone, every day
-> • Critter pen: drag three critters into an 8×8 pen and clear rows or columns
-> • Puzzles: 62 brain-teasers across six chapters, with hints
+> • Daily Stack: one shared puzzle for everyone, every day
+> • Critter Pen: drag three critters into an 8×8 pen and clear rows or columns
+> • Puzzles: 62 brain-teasers across six chapters, rated Easy to Expert, with hints
 >
 > GROW YOUR ZOO
 > Every critter you send home counts. Unlock 21 more animals, from a panda and a penguin to a llama, a flamingo and even a dinosaur, then dress them up in party hats, shades, bow ties, crowns, flower crowns, pirate hats, wizard hats and an oversized cowboy hat.
@@ -44,21 +44,20 @@ Paste these into App Store Connect › your app › App Store tab. Character lim
 > • Buddy bonuses when matching animals land side by side
 > • 32 stickers to collect, plus Game Center achievements
 > • Daily goals and play streaks
-> • Weekly leaderboards for the Petting Zoo, Challenge and the Critter pen
-> • A home-screen widget showing today's stack, your tries and your rank
+> • Weekly leaderboards for the Petting Zoo, Challenge and the Critter Pen
 >
 > MADE TO FEEL GOOD
 > Squishy landings, nervous critters when the stack gets high, sleepy ones that doze off, happy little sounds and gentle haptics. Choose a wooden-pen, garden-hedge or candy-rope frame, and paw-print landing guides. Plays great offline, on iPhone and iPad, with iCloud backup so your zoo follows you to a new device.
 >
-> Free to play, with optional ads. Every game uses a life; you hold up to 5 and one comes back every 20 minutes, and your first Daily stack try each day is free. Watch a short ad for a life, or grab a refill, an hour of unlimited play, the ad-free upgrade, the whole zoo, or extra skips and undos in the store. Restore purchases anytime.
+> Free to play, with optional ads. Every game uses a life; you hold up to 5 and one comes back every 20 minutes, and your first Daily Stack try each day is free. Watch a short ad for a life, or grab a refill, an hour of unlimited play, the ad-free upgrade, the whole zoo, or extra skips and undos in the store. Restore purchases anytime.
 >
 > Privacy policy: https://woodinteractive.app/critter-stack/privacy
 > Terms of use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 
-## What's New (version 1.0)
+## What's New
 
-> Welcome to Critter Stack! Stack, clear, collect and race the world in the Daily stack. We'd love your feedback: Settings › How to play has tips, and you can reach us at support@woodinteractive.app.
+Not shown for the first version. Use it from 1.1 on.
 
 ## Screenshots to upload
 

@@ -11,7 +11,7 @@ import GAME_HTML from './web/game';
 const ORIGIN = 'https://critterstack.app/';
 
 // Native services the page may use (see bridge() in the game). The home-screen widget is not in this version.
-const SERVICES = ['gameCenter', 'store', 'ads', 'haptics', 'notify', 'share'];
+const SERVICES = ['gameCenter', 'store', 'ads', 'haptics', 'notify', 'share', 'cloud'];
 const BEFORE_LOAD = `window.__critterNative=${JSON.stringify(SERVICES)};true;`;
 
 SplashScreen.preventAutoHideAsync().catch(() => {});

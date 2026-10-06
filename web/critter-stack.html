@@ -18,6 +18,7 @@
   html,body{height:100%}
   html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; overscroll-behavior:none; }
   /* app feel: no rubber-band bounce, no long-press callouts, no stray text selection, no double-tap zoom */
+  canvas, .well{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
   body{ margin:0; overscroll-behavior:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; touch-action:manipulation; }
   input, select, textarea, .share{ -webkit-user-select:text; user-select:text; -webkit-touch-callout:default; }
   img, canvas{ -webkit-user-drag:none; }
@@ -58,9 +59,10 @@
   .dots{ display:flex; gap:6px; justify-content:center; margin:0 0 12px; }
   .dots span{ width:8px; height:8px; border-radius:4px; background:#CFC6E6; transition: width .2s; }
   .dots span.on{ width:22px; background: var(--pink); }
-  .big.skip{ font-size:13px; padding:4px 12px; }
+  /* Skip / Close on tutorials: a plain text link (no pill, no text shadow, so the underline stays clean) */
+  .big.skip, .overlay.narrow .actions.minor .big.skip{ width:auto; font-size:14px; padding:6px 16px; background:transparent !important; box-shadow:none !important; border-color:transparent !important;
+    text-shadow:none !important; color:var(--ink-soft) !important; font-weight:700; text-decoration:underline; text-decoration-thickness:1.5px; text-underline-offset:4px; text-decoration-skip-ink:none; }
   .card .actions.minor:has(.skip), .overlay.narrow .card .actions.minor:has(.skip){ display:flex; justify-content:center; }
-  .overlay.narrow .actions.minor .big.skip{ width:auto; font-size:14px; padding:6px 16px; background:transparent; box-shadow:none; border-color:transparent; text-decoration:underline; }
   .big.how{ width:100%; margin:0 0 12px; }
   .ov-foot{ margin-top:auto; }
   .ov-foot .parade{ display:block; width:100%; height:112px; margin-top:10px; }
@@ -221,12 +223,22 @@
   .stk-pop .when{ font-weight:700; font-size:13px; color:#0F8F37; margin-bottom:14px; }
   .stk-pop .when.no{ color: var(--ink-soft); }
   html.dark .stk-pop .when:not(.no){ color: var(--green); }
+  .starthere{ position:relative; animation: startGlow 1.4s ease-in-out infinite; z-index:1; }
+  .starthere::after{ content:attr(data-tag); position:absolute; top:-12px; right:10px; font-size:12px; font-weight:700; letter-spacing:.02em; padding:3px 10px; border-radius:99px;
+    background:#FFD60A; color:#20124D; box-shadow:0 2px 0 #20124D; pointer-events:none; animation:none; }
+  @keyframes startGlow{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,214,10,.0), 0 5px 0 var(--line); } 50%{ box-shadow:0 0 0 6px rgba(255,214,10,.75), 0 5px 0 var(--line); } }
+  @media (prefers-reduced-motion: reduce){ .starthere{ animation:none; box-shadow:0 0 0 5px rgba(255,214,10,.8), 0 5px 0 var(--line); } }
   @keyframes popIn{ from{ transform: scale(.55); opacity:0; } to{ transform:none; opacity:1; } }
   @media (prefers-reduced-motion: reduce){ .stk-pop .pop{ animation:none; } }
+  .gcname{ font-weight:700; color:var(--ink); max-width:45%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .lvls{ display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; margin:0 0 12px; }
   .lvls button{ font-family: var(--font); font-weight:700; font-size:18px; color: var(--btn-ink); aspect-ratio:1; border:3px solid var(--line); border-radius:14px; box-shadow:0 3px 0 var(--line); background: linear-gradient(180deg, rgba(255,255,255,.75) 0 38%, rgba(255,255,255,0) 38.5%), var(--blue); cursor:pointer; position:relative; }
   .lvls button.done{ background: linear-gradient(180deg, rgba(255,255,255,.75) 0 38%, rgba(255,255,255,0) 38.5%), var(--green); }
-  .lvls button.done::after{ content:"✓"; position:absolute; right:3px; bottom:0; font-size:12px; }
+  .lvls button{ padding-bottom:10px; }
+  .lvls button::after{ content:attr(data-paws); position:absolute; left:0; right:0; bottom:5px; font-size:15px; letter-spacing:1px; line-height:1; color:#FFE14D; text-shadow:0 1px 0 var(--line); }
+  .lvls button:disabled::after{ color:#B9AED6; text-shadow:none; }
+  .lvls button.clean::before{ content:"✓"; position:absolute; top:-7px; right:-7px; width:20px; height:20px; border-radius:50%; background:#FFD60A; color:#2B1B4E; border:2px solid var(--line); font-size:12px; line-height:20px; text-shadow:none; }
+  .windiff{ text-align:center; font-size:20px; font-weight:700; margin:0 0 10px; color:var(--ink); }
   .lvls button:disabled{ background:var(--locked); color:#B9AED6; border-style:dashed; box-shadow:none; cursor:not-allowed; }
   .hs-tabs{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:2px 0 10px; }
   .hs-tabs button{ font-family: var(--font); font-weight:600; font-size:13px; color: var(--btn-ink); border:2px solid var(--line); border-radius:999px; padding:3px 11px; background:#F3EEFF; cursor:pointer; }
@@ -287,7 +299,7 @@
   .tokgift small{ display:block; font-size:11.5px; color:var(--ink-soft); line-height:1.3; }
   input.bad{ border-color:#E0245E !important; box-shadow:0 0 0 3px rgba(224,36,94,.25); }
   .warn{ color:#C21D52 !important; font-weight:600; }
-  .sw small.warn, .card.compact .sw small.warn, .card.tight .sw small.warn{ display:block !important; }
+  .sw small.warn, .card.compact .sw small.warn, .card.tight .sw small.warn, .sw small.keep{ display:block !important; }
   html.dark .warn{ color:#FF8FB5 !important; }
   .restore{ display:block; margin:6px auto 0; font-family:var(--font); font-size:14px; font-weight:600; color:var(--ink-soft); background:none; border:0; text-decoration:underline; cursor:pointer; padding:6px 10px; }
   .remind{ margin:0 0 12px; padding:10px 12px; border-radius:12px; background:var(--note); border:2px solid var(--line); text-align:left; display:grid; gap:8px; }
@@ -670,7 +682,7 @@
     html[data-mode="levels"] .top .lifepill.hdr{ min-width:46px; padding-inline:7px; }
   }
 
-  /* Rules reminder in the Critter pen and Puzzles */
+  /* How to play reminder in the Critter Pen and Puzzles */
   .rulesbtn{ display:none; position:absolute; top:5px; right:6px; z-index:1; font:700 12px/1 var(--font); color:#fff; background:#6E36B0; border:0; border-radius:999px;
     padding:6px 10px 7px; box-shadow:0 3px 0 #3F1A72; cursor:pointer; -webkit-tap-highlight-color:transparent; }
   .rulesbtn:active{ transform:translateY(2px); box-shadow:0 1px 0 #3F1A72; }
@@ -731,7 +743,7 @@
       </div>
     </div>
     <section class="panel next-panel"><h2>Next</h2><canvas id="nextCv"></canvas></section>
-    <section class="panel stats"><h2 id="statsHead">Score</h2><button type="button" class="rulesbtn" id="rulesBtn" aria-label="Rules">? Rules</button><div class="meplate" id="mePlate"></div>
+    <section class="panel stats"><h2 id="statsHead">Score</h2><button type="button" class="rulesbtn" id="rulesBtn" aria-label="How to play">? How to play</button><div class="meplate" id="mePlate"></div>
       <dl>
         <dt>Points</dt><dd class="score" id="sScore">0</dd>
         <dt class="m-hide" id="tLines">Rows</dt><dd class="m-hide" id="sLines">0</dd>
@@ -741,9 +753,9 @@
         <dt class="best">Best</dt><dd class="best" id="sBest">0</dd>
       </dl>
     </section>
-    <section class="panel howto"><h2>Critter pen</h2>
+    <section class="panel howto"><h2>Critter Pen</h2>
       <p>Drag any of the three critters into the pen. Fill a row or a column and everyone in it goes home.</p>
-      <p>Clear several lines in one move for more points. Keep clearing move after move to build a combo. When none of your three fit, the pen is full.</p>
+      <p>Clear several lines in one move for more points. Keep clearing move after move to build a combo. Three in a row starts Fever: the board glows and clears score extra until a move clears nothing. When none of your three fit, the pen is full.</p>
     </section>
     <section class="panel keys"><h2>Controls</h2>
       <ul>
@@ -753,7 +765,7 @@
         <li><span>Rotate back</span><kbd>Z</kbd></li>
         <li><span>Hard drop</span><kbd>Space</kbd></li>
         <li><span>Undo last critter</span><kbd>U</kbd></li>
-        <li><span>Steer (holds it still)</span><kbd>Mouse drag</kbd></li>
+        <li><span>Steer</span><kbd>Mouse drag</kbd></li>
         <li><span>Pause</span><kbd>P</kbd></li>
       </ul>
     </section>
@@ -1421,7 +1433,7 @@ const das={dir:0,t:0,rep:0}, DAS=150, ARR=45, LOCK_MS=500, CLEAR_MS=320;
 const DAILY_LEN=100, EMOJI={I:'🐶',O:'🐸',T:'🐱',S:'🐍',Z:'🦊',L:'🦒',J:'🐳',D:'🐥',E:'🐘'};
 let mode='classic', rng=Math.random, dealt=0, info={}, home={}, rescued=0, wholeCount=0;
 function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-/* The Daily stack runs on universal time (UTC): one tank for the whole world, a new one every day at 00:00 UTC
+/* The Daily Stack runs on universal time (UTC): one tank for the whole world, a new one every day at 00:00 UTC
    (8 PM Eastern in summer, 7 PM in winter). Everyone on a leaderboard plays the same 100 critters. */
 const utcStr=d=>d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');
 function tankKey(t){ return utcStr(new Date(t==null?Date.now():t)); }
@@ -1485,7 +1497,10 @@ function guardName(inp,hint,onGood){
     if(hint){ hint.textContent= bad?"Let's keep names friendly. Try another one.":orig; hint.classList.toggle('warn',bad); }
     if(!bad&&onGood) onGood(v); });
 }
-function getName(){ try{ const n=localStorage.getItem('critterName')||'Player'; return isRude(n)?'Player':n; }catch(e){ return 'Player'; } }
+// Game Center nickname from the app ('' = signed out). Remembered so it shows right away next launch.
+var gcAlias=(()=>{ try{ return localStorage.getItem('critterGCAlias')||''; }catch(e){ return ''; } })();
+window.critterPlayer=d=>{ gcAlias=(d&&d.alias)||''; try{ localStorage.setItem('critterGCAlias',gcAlias); }catch(e){} try{ updateMePlate(); }catch(e){} };
+function getName(){ if(gcAlias) return gcAlias; try{ const n=localStorage.getItem('critterName')||'Player'; return isRude(n)?'Player':n; }catch(e){ return 'Player'; } }
 function setName(n){ try{ localStorage.setItem('critterName',n); }catch(e){} }
 let elapsed=0, lastSec=-1, bestShown=0, lastEntryAt=null, lastOv=null;
 const fmtTime=ms=>{ const t=Math.floor(ms/1000); return Math.floor(t/60)+':'+String(t%60).padStart(2,'0'); };
@@ -1566,13 +1581,13 @@ const STICKERS=[
   {id:'ch60', icon:'⏱️', name:'Quick paws', desc:'Last 1:00 in Challenge.', test:G=>G.mode==='challenge'&&G.secs>=60},
   {id:'ch120', icon:'🦊', name:'Faster than a fox', desc:'Last 2:00 in Challenge.', test:G=>G.mode==='challenge'&&G.secs>=120},
   {id:'speed8', icon:'🚀', name:'Speed demon', desc:'Reach speed 8 in Challenge.', test:G=>G.mode==='challenge'&&G.level>=8},
-  {id:'daily', icon:'📅', name:'Full stack', desc:'Place all 100 critters in a Daily stack.', test:G=>G.dailyComplete},
-  {id:'streak3', icon:'🔥', name:'Three in a row', desc:'Play the Daily stack 3 days running.', test:(G,PR)=>PR.streak.best>=3},
-  {id:'streak7', icon:'🌟', name:'Week of critters', desc:'Play the Daily stack 7 days running.', test:(G,PR)=>PR.streak.best>=7},
-  {id:'streak30', icon:'👑', name:'Month in the zoo', desc:'Play the Daily stack 30 days running.', test:(G,PR)=>PR.streak.best>=30},
+  {id:'daily', icon:'📅', name:'Full stack', desc:'Place all 100 critters in a Daily Stack.', test:G=>G.dailyComplete},
+  {id:'streak3', icon:'🔥', name:'Three in a row', desc:'Play the Daily Stack 3 days running.', test:(G,PR)=>PR.streak.best>=3},
+  {id:'streak7', icon:'🌟', name:'Week of critters', desc:'Play the Daily Stack 7 days running.', test:(G,PR)=>PR.streak.best>=7},
+  {id:'streak30', icon:'👑', name:'Month in the zoo', desc:'Play the Daily Stack 30 days running.', test:(G,PR)=>PR.streak.best>=30},
   {id:'cross', icon:'✖️', name:'Crossroads', desc:'Clear a row and a column with one move in the pen.', test:G=>G.penCross},
   {id:'combo5', icon:'🎯', name:'On a roll', desc:'Reach combo ×5 in the pen.', test:G=>G.maxCombo>=5},
-  {id:'pen3k', icon:'🌾', name:'Pen pal', desc:'Score 3,000 in the Critter pen.', test:G=>G.mode==='puzzle'&&G.score>=3000},
+  {id:'pen3k', icon:'🌾', name:'Pen pal', desc:'Score 3,000 in the Critter Pen.', test:G=>G.mode==='puzzle'&&G.score>=3000},
   {id:'levels5', icon:'🧠', name:'Puzzle solver', desc:'Solve 5 puzzles.', test:(G,PR)=>Object.keys(PR.levels).length>=5},
   {id:'levelsAll', icon:'🎓', name:'Master keeper', desc:'Solve every puzzle.', test:(G,PR)=>Object.keys(PR.levels).length>=LEVELS.length},
   {id:'gold1', icon:'✨', name:'Struck gold', desc:'Send a golden critter home whole.', test:(G,PR)=>PR.gold>=1},
@@ -1593,7 +1608,7 @@ const GOALS=[
   {name:'Score 5,000 in the Petting Zoo', test:G=>G.mode==='classic'&&G.score>=5000},
   {name:'Last 1:30 in Challenge', test:G=>G.mode==='challenge'&&G.secs>=90},
   {name:'Make 3 buddy pairs in one game', test:G=>G.buddies>=3},
-  {name:'Get combo ×3 in the Critter pen', test:G=>G.maxCombo>=3},
+  {name:'Get combo ×3 in the Critter Pen', test:G=>G.maxCombo>=3},
   {name:'Clear 2 lines with one move in the pen', test:G=>G.pen&&G.maxClear>=2},
   {name:'Send 10 critters home in one game', test:G=>sum(G.home)>=10},
   {name:'Solve a puzzle', test:G=>G.levelSolved},
@@ -1603,7 +1618,7 @@ function goalToday(){ return GOALS[dayHash(todayKey())%GOALS.length]; }
 function goalDoneToday(){ return PR.goal.day===todayKey()&&PR.goal.done; }
 function yesterdayKey(){ const d=new Date(); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function currentStreak(){ const s=PR.streak; return (s.last===tankKey()||s.last===prevTankKey())?s.count:0; }
-function streakText(){ const n=currentStreak(); return n?`${plural(n,'day')} in a row${PR.streak.best>n?` · best ${PR.streak.best}`:''}`:(PR.streak.best?`Start a new one · best ${PR.streak.best}`:'Play the Daily stack to start one'); }
+function streakText(){ const n=currentStreak(); return n?`${plural(n,'day')} in a row${PR.streak.best>n?` · best ${PR.streak.best}`:''}`:(PR.streak.best?`Start a new one · best ${PR.streak.best}`:'Play the Daily Stack to start one'); }
 // days-played streak: any mode, any day you start a game
 function markPlayed(){
   const p=PR.play, t=todayKey(); PR.games=(PR.games||0)+1;
@@ -1623,7 +1638,7 @@ function updateStreak(){
 function checkUnlocks(quiet){
   PR.unlocked={challenge:true,pen:true}; return;   // every mode is open from the start
   if(!PR.unlocked.challenge && ((G.mode==='classic'&&score>=2000) || Scores.top('classic')>=2000)){ PR.unlocked.challenge=true; if(!quiet) toast('Challenge mode unlocked!'); }
-  if(!PR.unlocked.pen && sum(PR.home)>=20){ PR.unlocked.pen=true; if(!quiet) toast('The Critter pen and Puzzles are open!'); }
+  if(!PR.unlocked.pen && sum(PR.home)>=20){ PR.unlocked.pen=true; if(!quiet) toast('The Critter Pen and Puzzles are open!'); }
 }
 function progressCheck(){
   G.score=score; G.secs=Math.floor(elapsed/1000); G.level=level;
@@ -1636,7 +1651,7 @@ function progressCheck(){
 checkUnlocks(true); saveP();
 
 /* ---------- leaderboards ----------
-   Daily stack: one board per day, 3 tries, no skips or undos. Petting Zoo, Challenge and Pen: weekly boards
+   Daily Stack: one board per day, 3 tries, no skips or undos. Petting Zoo, Challenge and Pen: weekly boards
    (Monday to Sunday), tokens allowed. The top 3 of every finished board win tokens and a permanent medal.
    Inside the iOS app the native shell answers {type:'loadBoard', leaderboardID} by calling
    window.critterBoardLoaded({leaderboardID, total, entries:[{rank,name,score,crest,medal,title}], player:{rank,score}})
@@ -1784,7 +1799,7 @@ function finishPeriod(key,place,total){
     PR.results=PR.results||[]; PR.results.unshift({key,rank:place,total,score:mine}); PR.results=PR.results.slice(0,20);
     delete PR.lb[key];
     if(place&&place<=3){
-      const mk=MEDAL_KEYS[place-1], n=PRIZES[k.cfg.period][place-1], when=k.cfg.period==='day'?`Daily stack #${dailyNum(+k.start)}`:`${k.cfg.label} · week of ${periodLabel(k.start)}`;
+      const mk=MEDAL_KEYS[place-1], n=PRIZES[k.cfg.period][place-1], when=k.cfg.period==='day'?`Daily Stack #${dailyNum(+k.start)}`:`${k.cfg.label} · week of ${periodLabel(k.start)}`;
       PR.medals[mk]=(PR.medals[mk]||0)+1; PR.podiums.unshift({key,place,at:now}); PR.podiums=PR.podiums.slice(0,60);
       PR.skips=skipsLeft()+n; PR.undos=undosLeft()+n;
       maybeAskReview('podium');
@@ -1836,7 +1851,7 @@ function showBoards(b0,opts){
       li.append(span('rk',e.rank<=3?MEDAL_ICON[MEDAL_KEYS[e.rank-1]]:e.rank), plate(e.flair,e.name||'Player',true), span('sc',e.score.toLocaleString())); ol.append(li); };
     show.forEach(add);
     if(my&&my.rank>10){ const g=document.createElement('li'); g.className='gap'; g.textContent='⋯'; ol.append(g); add(my); }
-    const act=$('ovActions'); if(act){ const pb=act.querySelector('button'); if(pb){ pb.textContent= day ? (triesLeft()?`Play the Daily stack (${triesLeft()} ${triesLeft()===1?'try':'tries'} left)`:'No tries left on this stack') : `Play ${cfg.label==='Pen'?'Critter pen':cfg.label}`; pb.disabled= day&&!triesLeft(); } }
+    const act=$('ovActions'); if(act){ const pb=act.querySelector('button'); if(pb){ pb.textContent= day ? (triesLeft()?`Play the Daily Stack (${triesLeft()} ${triesLeft()===1?'try':'tries'} left)`:'No tries left on this stack') : `Play ${cfg.label==='Pen'?'Critter Pen':cfg.label}`; pb.disabled= day&&!triesLeft(); } }
     fitCard();
   };
   Object.keys(LB).forEach(k=>{ const x=document.createElement('button'); x.type='button'; x.dataset.k=k; x.textContent=LB[k].label+(LB[k].period==='day'?' · today':''); x.addEventListener('click',()=>{ requestBoard(k); drawBoard(k); }); tabs.append(x); });
@@ -1864,7 +1879,7 @@ async function rankImage(b){
   const F='Fredoka, Poppins, system-ui, sans-serif';
   const txt=(s,X,Y,size,col,align='center',w=700,stroke=0)=>{ x.font=`${w} ${size}px ${F}`; x.textAlign=align; x.textBaseline='middle'; if(stroke){ x.lineJoin='round'; x.lineWidth=stroke; x.strokeStyle='#20124D'; x.strokeText(s,X,Y); } x.fillStyle=col; x.fillText(s,X,Y); };
   txt('Critter Stack',W/2,110,96,'#FFD60A','center',700,16);
-  txt(day?`Daily stack #${dailyNum()}`:`${cfg.label} · this week`,W/2,205,48,'#fff','center',600);
+  txt(day?`Daily Stack #${dailyNum()}`:`${cfg.label} · this week`,W/2,205,48,'#fff','center',600);
   // big card
   x.fillStyle='rgba(255,255,255,.96)'; rr(x,90,260,W-180,430,48); x.fill();
   const [cx,cy]=[W/2,330]; x.fillStyle={gold:'#FFD60A',silver:'#D5DAE8',bronze:'#E8A36B'}[f.medal]||'#F3EEFF'; x.beginPath(); x.arc(cx-150,cy,44,0,7); x.fill(); x.lineWidth=6; x.strokeStyle='#20124D'; x.stroke();
@@ -1884,7 +1899,7 @@ async function rankImage(b){
 }
 async function shareRank(b){
   const c=await rankImage(b), url=c.toDataURL('image/png');
-  const text=`I'm #${currentRank(b).rank||'?'} on the ${LB[b].period==='day'?'Critter Stack Daily stack':'Critter Stack '+LB[b].label+' board'}! 🐾`;
+  const text=`I'm #${currentRank(b).rank||'?'} on the ${LB[b].period==='day'?'Critter Stack Daily Stack':'Critter Stack '+LB[b].label+' board'}! 🐾`;
   if(post('share',{type:'image', dataURL:url, text})) return;                  // iPhone app: native share sheet
   try{ const blob=await new Promise(r=>c.toBlob(r,'image/png')); const file=new File([blob],'critter-stack-rank.png',{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],text}); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
@@ -1895,9 +1910,9 @@ async function shareRank(b){
 }
 function outOfTries(){
   const st=currentRank('daily');
-  showOverlay({eyebrow:`Daily stack #${dailyNum()}`, title:"That's all 3 tries",
+  showOverlay({eyebrow:`Daily Stack #${dailyNum()}`, title:"That's all 3 tries",
     text:`Your best on this stack is ${st.mine.toLocaleString()} points${st.rank?`, #${st.rank.toLocaleString()} of ${st.total.toLocaleString()} right now`:''}.`,
-    extra:(()=>{ const d=document.createElement('div'); d.className='cdbox'; const l=document.createElement('small'); l.textContent=`Daily stack #${dailyNum()+1} opens in`; const n=document.createElement('small'); n.textContent=`${resetLocalTime()} your time · midnight UTC`; d.append(l,countdown(tankResetAt(),'huge'),n); return d; })(),
+    extra:(()=>{ const d=document.createElement('div'); d.className='cdbox'; const l=document.createElement('small'); l.textContent=`Daily Stack #${dailyNum()+1} opens in`; const n=document.createElement('small'); n.textContent=`${resetLocalTime()} your time · midnight UTC`; d.append(l,countdown(tankResetAt(),'huge'),n); return d; })(),
     buttons:[{label:'Rankings',cls:'big small alt',fn:()=>showBoards('daily')},{label:'Play Petting Zoo',cls:'big small',fn:()=>newGame('classic')},{label:'Menu',cls:'big small ghost',fn:quitToMenu}]});
 }
 function rankLine(m,r){
@@ -1917,7 +1932,7 @@ function bestGift(m,newBest,newTime){
   const d=document.createElement('div'); d.className='tokgift';
   const ic=document.createElement('span'); ic.className='coin'; ic.textContent= undo?'↶':'⏭'; ic.setAttribute('aria-hidden','true');
   const b=document.createElement('b'); b.textContent=`+1 ${kind} for a ${newBest?'new best':'new longest run'}!`;
-  const sm=document.createElement('small'); sm.textContent= m==='daily' ? `Tokens can't be used in the Daily stack, but they're yours for the other modes. One free token per mode each day.` : `You have ${plural(undo?undosLeft():skipsLeft(),kind)} now. One free token per mode each day.`;
+  const sm=document.createElement('small'); sm.textContent= m==='daily' ? `Tokens can't be used in the Daily Stack, but they're yours for the other modes. One free token per mode each day.` : `You have ${plural(undo?undosLeft():skipsLeft(),kind)} now. One free token per mode each day.`;
   const tx=document.createElement('span'); tx.append(b,sm); d.append(ic,tx); return d;
 }
 /* ---------- native app bridges (iOS shell) ----------
@@ -1948,9 +1963,9 @@ function pushWidget(){
     crest:f.emoji, medal:f.medal||'', title:f.title||'', name:getName(), resetsAt:tankResetAt()});
 }
 
-// Daily reminder: our own friendly ask first (after the first Daily stack), then iOS's permission prompt.
+// Daily reminder: our own friendly ask first (after the first Daily Stack), then iOS's permission prompt.
 // The web side schedules the next 7 days itself, skipping today once the tank has been played.
-const REMIND_LINES=["Today's stack is ready. Same 100 critters for everyone!","Fresh critters just arrived. Can you make the top 3?","The Daily stack is open. 3 tries, pure skill.","Your critters are waiting in today's stack 🐸","New day, new stack. Go get that podium!"];
+const REMIND_LINES=["Today's stack is ready. Same 100 critters for everyone!","Fresh critters just arrived. Can you make the top 3?","The Daily Stack is open. 3 tries, pure skill.","Your critters are waiting in today's stack 🐸","New day, new stack. Go get that podium!"];
 function remindState(){ PR.remind=PR.remind||{asked:false,on:false,hour:17}; return PR.remind; }
 function scheduleReminders(){
   const st=remindState(); if(!bridge('notify')) return;
@@ -1960,7 +1975,7 @@ function scheduleReminders(){
     const t=new Date(now.getFullYear(),now.getMonth(),now.getDate()+d,st.hour,0,0);
     if(t<=now || tankKey(+t)===played) continue;
     const n=dailyNum(+t);
-    out.push({id:'daily-'+dayStr(t), at:+t, title:`Daily stack #${n}`, body:REMIND_LINES[n%REMIND_LINES.length]});
+    out.push({id:'daily-'+dayStr(t), at:+t, title:`Daily Stack #${n}`, body:REMIND_LINES[n%REMIND_LINES.length]});
   }
   post('notify',{type:'schedule', items:out});
 }
@@ -2220,7 +2235,7 @@ function setUndos(n){ PR.undos=Math.max(0,n|0); saveP(); updateSkipUI(); }
 let lastPlaced=null;
 function doUndo(){
   if(!cur||clearing||view!=='tank') return;
-  if(mode==='daily'){ toast('No undos in the Daily stack. Pure skill!'); return; }
+  if(mode==='daily'){ toast('No undos in the Daily Stack. Pure skill!'); return; }
   if(!lastPlaced){ toast('Nothing to undo yet'); return; }
   if(lastPlaced.cleared){ toast("Can't undo a move that cleared rows"); return; }
   if(undosLeft()<=0){ openStore('undos'); return; }
@@ -2244,7 +2259,7 @@ function updateSkipUI(){
 function doHold(){ doSkip(); }
 function doSkip(){
   if(!cur||clearing) return;
-  if(mode==='daily'){ toast('No skips in the Daily stack. Pure skill!'); return; }
+  if(mode==='daily'){ toast('No skips in the Daily Stack. Pure skill!'); return; }
   if(skipsLeft()<=0){ openStore('skips'); return; }
   setSkips(skipsLeft()-1); G.usedHold=true;
   // the skipped critter scampers off the top of the tank
@@ -2338,7 +2353,7 @@ function endGame(complete, quit){
     const ask=askReminder(); if(ask){ const w=document.createElement('div'); if(extra) w.append(extra); w.append(ask); extra=w; }
     { const w=document.createElement('div'); if(extra) w.append(extra); const c=document.createElement('p'); c.className='cdline solo'; c.append('⏱ This stack closes in ',countdown(tankResetAt()),` (${resetLocalTime()} your time)`); w.append(c); extra=w; }
     let db=dailyBest(); if(score>db){ db=score; try{ localStorage.setItem('critterDaily-'+(G.tank||tankKey()),score); }catch(e){} }
-    showOverlay({ eyebrow:`Daily stack #${n}`, title: complete?'Stack complete':quit?'Game ended':'The tank is full',
+    showOverlay({ eyebrow:`Daily Stack #${n}`, title: complete?'Stack complete':quit?'Game ended':'The tank is full',
       text: (complete?`All ${DAILY_LEN} critters dealt! `:`${quit?'Ended':'Topped out'} with ${plural(DAILY_LEN-dealt,'critter')} still to come. `)+`${score.toLocaleString()} points, ${plural(lines,'row')}, ${plural(rescued,'critter')} sent home (${wholeCount} whole).`,
       extra,
       buttons:[triesLeft()?{label:`Try again (${triesLeft()} left)`,cls:'big small alt',fn:()=>newGame('daily')}:{label:'Out of tries',cls:'big small alt',fn:outOfTries},hsBtn,menuBtn],
@@ -2522,7 +2537,7 @@ function showLives(){
   box.append(p);
   const btns=[]; if(canReward()&&!unl) btns.push({label: rewardsLeft()?'▶ Watch an ad · +1 life':'No free ads left today',cls:'big small alt',disabled:!rewardsLeft(),fn:()=>watchForReward('life',showLives)});
   showOverlay({eyebrow:'Lives', title: unl?'Unlimited lives':`${n} of ${LIVES_MAX} lives`, noRemember:true, extra:box,
-    text:`Every game uses a life, and one comes back every ${LIFE_MS/60000} minutes. Your first Daily stack try each day is free, and solving a puzzle gives its life back.`,
+    text:`Every game uses a life, and one comes back every ${LIFE_MS/60000} minutes. Your first Daily Stack try each day is free, and solving a puzzle gives its life back.`,
     buttons:btns, minor:[{label:'❤️ Get more lives',cls:'big ghost',fn:()=>openStore('lives')}], back:back?()=>showOverlay(back):hideOverlay });
 }
 // the first time someone picks Challenge, explain how it differs from the Petting Zoo (shown before a life is used)
@@ -2550,7 +2565,7 @@ function dailyIntro(){
   const lf=document.createElement('p'); lf.className='dlife';
   lf.textContent= tryNo===1 ? '❤️ Your first try each day is free' : livesUnlimited() ? '♾️ Unlimited lives' : `❤️ This try uses a life (you have ${livesNow()})`;
   box.append(tries,cd,sk,lf);
-  showOverlay({eyebrow:`Daily stack #${dailyNum()}`, title:`Try ${tryNo} of ${DAILY_TRIES}`, text:'Everyone in the world gets the same 100 critters. No skips or undos. Your best try counts.', extra:box, noRemember:true,
+  showOverlay({eyebrow:`Daily Stack #${dailyNum()}`, title:`Try ${tryNo} of ${DAILY_TRIES}`, text:'Everyone in the world gets the same 100 critters. No skips or undos. Your best try counts.', extra:box, noRemember:true,
     buttons:[{label:'Start',cls:'big small alt',fn:()=>useLife('daily',()=>gate(()=>startGame('daily')))},{label:'Rankings',cls:'big small ghost',fn:()=>showBoards('daily',{back:lastOv})}],
     back: running&&!over ? null : ()=>showStart() });
 }
@@ -2603,8 +2618,8 @@ function showStart(){
     extra: today, grid:true, footer: parade(),
     buttons:[{label:'Petting Zoo',cls:'big small',fn:()=>newGame('classic')},
       {label: lockC?'Challenge 🔒':'Challenge', cls:'big small hot', fn:()=>newGame('challenge'), disabled:lockC, title:'Score 2,000 in the Petting Zoo to unlock'},
-      {label: triesLeft()?`Daily stack #${dailyNum()}`:'Daily ✓ done', cls:'big small alt', fn:()=>newGame('daily')},
-      {label: lockP?'Critter pen 🔒':'Critter pen', cls:'big small pen', fn:()=>newGame('puzzle'), disabled:lockP, title:'Send 20 critters home to unlock'},
+      {label: triesLeft()?`Daily Stack #${dailyNum()}`:'Daily ✓ done', cls:'big small alt', fn:()=>newGame('daily')},
+      {label: lockP?'Critter Pen 🔒':'Critter Pen', cls:'big small pen', fn:()=>newGame('puzzle'), disabled:lockP, title:'Send 20 critters home to unlock'},
       {label: lockP?'Puzzles 🔒':'Puzzles', cls:'big small pz', fn:showLevels, disabled:lockP, title:'Send 20 critters home to unlock'},
       {label:'🛍️ Store', cls:'big small storebtn', fn:()=>openStore(null)}],
     minor:[{label:'Zoo',icon:'🐾',sub:`${sum(PR.home).toLocaleString()} home`,cls:'big tile zootile',fn:showZoo},
@@ -2685,7 +2700,7 @@ $('viewBtn').addEventListener('click',()=>setPhone(!document.documentElement.cla
 try{ if(localStorage.getItem('critterPhoneView')) document.documentElement.classList.add('phone'); }catch(e){}
 $('menuBtn').addEventListener('click',()=>{ if(menuOpen) closeMenu(); else openMenu(); });
 let menuOpen=false;
-const modeName=()=>mode==='daily'?`Daily stack #${dailyNum()}`:mode==='puzzle'?'Critter pen':mode==='levels'?`Puzzle ${levelIdx+1}`:mode==='challenge'?'Challenge':'Petting Zoo';
+const modeName=()=>mode==='daily'?`Daily Stack #${dailyNum()}`:mode==='puzzle'?'Critter Pen':mode==='levels'?`Puzzle ${levelIdx+1}`:mode==='challenge'?'Challenge':'Petting Zoo';
 function openMenu(){
   if(!running||over){ quitToMenu(); return; }
   if(view==='tank'){ paused=true; soft=false; das.dir=0; $('pauseBtn').textContent='Resume'; }
@@ -2720,8 +2735,11 @@ function drawSide(){
   if(!queue) return;
   if(typeof updateSkipUI==='function'&&typeof PR!=='undefined') updateSkipUI();
   const nw=nextCv.width/dpr, nh=nextCv.height/dpr; nc.clearRect(0,0,nw,nh);
+  const left=(mode==='daily'&&running)?Math.max(0,DAILY_LEN-dealt):Infinity, shown=Math.min(nextCount,left);
+  const np0=nextCv.parentNode; np0.classList.toggle('empty',shown===0);
+  if(shown===0){ np0.style.setProperty('--nc','#B9AED6'); nc.font='700 13px Fredoka, system-ui, sans-serif'; nc.textAlign='center'; nc.textBaseline='middle'; nc.fillStyle='#8A7FA8'; nc.fillText('Last one!',nw/2,nh/2); np0.dataset.t='end'; return; }
   const slot=(nh-(nextCount>1?previewS*.3*(nextCount-1):0))/nextCount;
-  for(let i=0;i<nextCount;i++){ nc.globalAlpha=i===0?1:.75; drawPieceIn(nc,queue[i],i===0?previewS:previewS*.85,nw/2,slot*i+previewS*.3*i+slot/2); }
+  for(let i=0;i<shown;i++){ nc.globalAlpha=i===0?1:.75; drawPieceIn(nc,queue[i],i===0?previewS:previewS*.85,nw/2,slot*i+previewS*.3*i+slot/2); }
   nc.globalAlpha=1;
   const np=nextCv.parentNode; try{ np.style.setProperty('--nc', palOf({t:queue[0]}).color); }catch(e){}
   if(np.dataset.t!==queue[0]+'|'+queue.length){ const first=!np.dataset.t; np.dataset.t=queue[0]+'|'+queue.length; if(!first){ np.classList.remove('pop'); void np.offsetWidth; np.classList.add('pop'); } }
@@ -2744,7 +2762,7 @@ function render(){
   const W=S*COLS, H=S*ROWS, c=bc;
   const bg=c.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#2A1A63'); bg.addColorStop(1,'#140A38');
   c.fillStyle=bg; c.fillRect(0,0,W,H);
-  if(fever){ const a=.12+.08*Math.sin(performance.now()/160); const fg=c.createLinearGradient(0,0,0,H); fg.addColorStop(0,`rgba(255,79,163,${a*1.6})`); fg.addColorStop(.5,'rgba(255,79,163,0)'); c.fillStyle=fg; c.fillRect(0,0,W,H); }
+  if(fever){ const a=.11+.03*Math.sin(performance.now()/520); const fg=c.createLinearGradient(0,0,0,H); fg.addColorStop(0,`rgba(255,79,163,${a*1.6})`); fg.addColorStop(.5,'rgba(255,79,163,0)'); c.fillStyle=fg; c.fillRect(0,0,W,H); }
   const [shx,shy]=shakeOffset(); c.save(); c.translate(shx,shy);
   c.fillStyle='rgba(255,255,255,.07)';
   for(let y=1;y<ROWS;y++) for(let x=1;x<COLS;x++){ c.beginPath(); c.arc(x*S,y*S,1.3,0,Math.PI*2); c.fill(); }
@@ -2802,7 +2820,7 @@ function update(dt){
   }
   if(clearing){ clearing.t+=dt; if(clearing.t>=CLEAR_MS) finishClear(); return; }
   if(!cur) return;
-  if(dragHold){ followDrag(); lockT=0; dropAcc=0; return; }   // held by a finger or mouse: no falling or locking
+  if(dragHold) followDrag();   // a finger steers the critter, but it keeps falling
   if(das.dir){ das.t+=dt; if(das.t>DAS){ das.rep+=dt; while(das.rep>=ARR){ das.rep-=ARR; move(das.dir); } } }
   if(collide(cur.t,cur.rot,cur.x,cur.y+1)){ lockT+=dt; dropAcc=0; if(lockT>=LOCK_MS) lockPiece(); }
   else {
@@ -2877,8 +2895,8 @@ $('pad').querySelectorAll('button').forEach(b=>{
   b.addEventListener('contextmenu',e=>e.preventDefault());
 });
 // swipe & tap on the board
-// Tank touch/mouse: press and drag to steer the critter at any speed (it pauses falling while held),
-// release to let it fall again; a quick straight flick down drops it; tap rotates. Skipping is only ever the Skip button, never a gesture.
+// Tank touch/mouse: press and drag to steer the critter at any speed (it keeps falling while held),
+// the critter keeps falling while you steer; a quick straight flick down drops it; tap rotates. Skipping is only ever the Skip button, never a gesture.
 let sw=null, dragHold=false;
 function followDrag(){
   if(!sw||!cur||clearing) return;
@@ -2890,10 +2908,16 @@ function followDrag(){
   while(cur.y<tr&&guard--){ if(collide(cur.t,cur.rot,cur.x,cur.y+1)) break; leavePrints(cur.t,cur.rot,cur.x,cur.y,1); cur.y++; score+=1; }
 }
 function endDrag(){ sw=null; dragHold=false; soft=false; dropAcc=0; lockT=0; board.classList.remove('dragging'); }
-board.addEventListener('pointerdown',e=>{ if(view==='pen'){ penDown(e); return; } if(!live()||!cur) return;
+function tankDown(e){ if(!live()||!cur) return;
   sw={x0:e.clientX,y0:e.clientY,t:performance.now(),moved:false,ax:e.clientX,ay:e.clientY,lx:e.clientX,ly:e.clientY,cur,col:cur.x,row:cur.y,
       hist:[{t:performance.now(),x:e.clientX,y:e.clientY,col:cur.x}], lockCol:null};
-  dragHold=true; try{ board.setPointerCapture(e.pointerId); }catch(_){} board.classList.add('dragging'); });
+  dragHold=true; try{ board.setPointerCapture(e.pointerId); }catch(_){} board.classList.add('dragging'); }
+board.addEventListener('pointerdown',e=>{ if(view==='pen'){ penDown(e); return; } tankDown(e); });
+// touches that start on the wooden frame around the tank (easy to hit near the edges) steer and flick too
+$('well').addEventListener('pointerdown',e=>{ if(e.target===board||view==='pen') return; if(e.pointerType==='mouse') return; tankDown(e); });
+// iOS: stop the long-press magnifier and selection bubble on the board (pointer events still fire)
+$('well').addEventListener('touchstart',e=>{ if(!e.target.closest('button,a,input')) e.preventDefault(); },{passive:false});
+$('well').addEventListener('touchmove',e=>{ if(!e.target.closest('button,a,input')) e.preventDefault(); },{passive:false});
 board.addEventListener('pointermove',e=>{ if(view==='pen'){ penMove(e); return; } if(!sw) return;
   if(!live()){ endDrag(); return; }
   if(Math.abs(e.clientX-sw.x0)>8||Math.abs(e.clientY-sw.y0)>8) sw.moved=true;
@@ -2940,7 +2964,7 @@ let penBest=0; try{ penBest=+localStorage.getItem('critterPenBest')||0; }catch(e
 function setView(v){ view=v; document.documentElement.dataset.view=v; layout(); }
 function applyModeUI(){
   const pen = mode==='puzzle'||mode==='levels';
-  $('statsHead').textContent = {daily:`Daily #${dailyNum()} · Try ${Math.min(DAILY_TRIES,dailyState().tries||1)}/${DAILY_TRIES}`, puzzle:'Critter pen', challenge:'Challenge', levels:`Puzzle ${levelIdx+1}`}[mode] || 'Score';
+  $('statsHead').textContent = {daily:`Daily #${dailyNum()} · Try ${Math.min(DAILY_TRIES,dailyState().tries||1)}/${DAILY_TRIES}`, puzzle:'Critter Pen', challenge:'Challenge', levels:`Puzzle ${levelIdx+1} · ${'🐾'.repeat(LEVELS[levelIdx].d||1)}`}[mode] || 'Score';
   $('tLeft').textContent = mode==='puzzle' ? 'Combo' : mode==='challenge' ? 'Time' : mode==='levels' ? 'Rocks left' : 'Left';
   $('tLeft').hidden = $('sLeft').hidden = mode==='classic';
   $('tLevel').textContent = mode==='challenge' ? 'Speed' : 'Level';
@@ -2975,7 +2999,7 @@ function newPen(){
   score=0; lines=0; level=1; over=false; paused=false; running=true; idSeq=0; combo=0; penEnding=false;
   info={}; home={}; rescued=0; wholeCount=0; drag=null; penFlash=[]; particles.length=0; popups.length=0; G=newG(mode);
   hideOverlay(); setView('pen'); applyModeUI(); updateStats(); updateZoo();
-  if(!PR.seenPenTour){ PR.seenPenTour=1; saveP(); showTour(PEN_TOUR,0,{name:'Critter pen',first:true}); }
+  if(!PR.seenPenTour){ PR.seenPenTour=1; saveP(); showTour(PEN_TOUR,0,{name:'How to play · Critter Pen',first:true}); }
 }
 function place(i,gx,gy){
   const pc=tray[i]; const id=++idSeq;
@@ -3027,7 +3051,7 @@ function penGameOver(quit, extra, rl){
   penEnding=false;
   if(score>penBest){ penBest=score; try{ localStorage.setItem('critterPenBest',penBest); }catch(e){} }
   updateStats();
-  showOverlay({ eyebrow:'Critter pen', title: quit?'Pen closed':'No room left',
+  showOverlay({ eyebrow:'Critter Pen', title: quit?'Pen closed':'No room left',
     text:`${quit?'':'None of your three critters fit. '}${score.toLocaleString()} points, ${plural(lines,'line')} cleared, ${plural(rescued,'critter')} sent home (${wholeCount} whole).`,
     extra, buttons:[{label:'Play again',cls:'big small pen',fn:()=>newGame('puzzle')},{label:'Rankings',cls:'big small ghost',fn:()=>showBoards('puzzle')},{label:'Menu',cls:'big small ghost',fn:quitToMenu}],
     note:`Best in the pen: ${penBest.toLocaleString()} points.${rl?` Weekly board: ${rl}`:''}` });
@@ -3054,7 +3078,7 @@ function renderPen(){
   const c=bc, W=P*PN, BH=P*PN, H=Math.round(P*(PN+TRAY_R));
   const bg=c.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#2A1A63'); bg.addColorStop(1,'#140A38');
   c.fillStyle=bg; c.fillRect(0,0,W,H);
-  if(combo>=3){ const a=.12+.08*Math.sin(performance.now()/160); const fg=c.createLinearGradient(0,0,0,BH); fg.addColorStop(0,`rgba(255,79,163,${a*1.6})`); fg.addColorStop(.6,'rgba(255,79,163,0)'); c.fillStyle=fg; c.fillRect(0,0,W,BH); }
+  if(combo>=3){ const a=.11+.03*Math.sin(performance.now()/520); const fg=c.createLinearGradient(0,0,0,BH); fg.addColorStop(0,`rgba(255,79,163,${a*1.6})`); fg.addColorStop(.6,'rgba(255,79,163,0)'); c.fillStyle=fg; c.fillRect(0,0,W,BH); }
   const [shx,shy]=shakeOffset(); c.save(); c.translate(shx,shy);
   let hl=null; if(drag&&drag.valid) hl=linesIf(drag.piece,drag.gx,drag.gy);
   for(let y=0;y<PN;y++) for(let x=0;x<PN;x++){
@@ -3099,76 +3123,77 @@ function renderPen(){
 
 /* ---------- pen puzzles: clear every rock with the critters you're given ---------- */
 const LEVELS=[
-  {name:'First steps', map:['........','........','........','........','........','........','........','RRRR....'], pieces:[['I',0],['O',0],['T',0]], sol:[[0,4,7]]},
-  {name:'Square peg', map:['........','........','........','........','........','........','RRR..RRR','RRR..RRR'], pieces:[['S',0],['O',0],['I',1]], sol:[[1,3,6]]},
-  {name:'Tall order', map:['.......R','.......R','.......R','.......R','........','........','........','........'], pieces:[['T',0],['I',1],['O',0]], sol:[[1,7,4]]},
-  {name:'Two by two', map:['........','........','........','........','........','RRRR..RR','RRRRR..R','RRRRR..R'], pieces:[['O',0],['Z',0],['O',0]], sol:[[0,5,6],[2,4,4]]},
-  {name:'Crossroads', map:['...RR...','...RR...','...RR...','RRR..RRR','RRR..RRR','...RR...','...RR...','...RR...'], pieces:[['T',0],['O',0],['L',0]], sol:[[1,3,3]]},
-  {name:'Corner piece', map:['........','........','........','........','........','........','RR.RRRRR','...RRRRR'], pieces:[['J',0],['L',0],['I',0]], sol:[[1,0,6]]},
-  {name:'Slither in', map:['........','........','........','........','........','........','R..RRRRR','..RRRRRR'], pieces:[['Z',0],['T',0],['S',0]], sol:[[2,0,6]]},
-  {name:'Either way', map:['......RR','......RR','......RR','......RR','......RR','......RR','........','RRRR....'], pieces:[['J',1],['I',0],['O',0]], sol:[[1,4,7],[2,6,6]]},
-  {name:'Upside down', map:['........','........','........','........','........','........','RRR...RR','RRRR.RRR'], pieces:[['T',0],['O',0],['T',2]], sol:[[2,3,6]]},
-  {name:'Double cross', map:['RR......','RR......','RR......','..RRRRRR','..RRRRRR','RR......','RR......','RR..RRRR'], pieces:[['I',0],['L',1],['O',0]], sol:[[2,0,3],[0,0,7]]},
-  // 52 more, made by puzzles/gen.js: each one is replayed against its stored solution, which wins only on the last critter.
-  // sol = [critter number in the list, x, y] in order. The tray still shows three at a time; the next ones arrive when it empties.
-  {name:"Hop to it", map:['RRR...RR','........','........','........','........','RRRRRR.R','........','........'], pieces:[['I',1],['J',2],['L',2]], sol:[[0,6,2],[1,3,2],[2,3,0]], full:1},
-  {name:"Fence line", map:['...R...R','........','...R....','...R...R','...R...R','...R...R','...R...R','...R...R'], pieces:[['Z',1],['L',3],['J',1]], sol:[[0,6,1],[1,4,1],[2,2,1]], full:1},
-  {name:"Muddy boots", map:['........','RRR.RRRR','........','........','........','........','RRRRR...','........'], pieces:[['T',2],['I',2],['I',3]], sol:[[0,5,6],[1,4,3],[2,3,0]], full:1},
-  {name:"Hay bale", map:['....RR.R','........','....RR.R','....RR.R','....R..R','.......R','....R..R','....RR.R'], pieces:[['S',3],['T',3],['I',2]], sol:[[0,0,0],[1,4,4],[2,4,1]], full:1},
-  {name:"Pond skipper", map:['RR......','RR......','RR......','RR......','RR......','R.......','RR......','........'], pieces:[['I',3],['J',2],['I',0]], sol:[[0,2,1],[1,1,5],[2,0,7]], full:1},
-  {name:"Lily pads", map:['...RR...','...RR...','...R..R.','......R.','....R.R.','....R.R.','....R.R.','...RR.R.'], pieces:[['I',1],['O',0],['T',2]], sol:[[0,3,3],[1,4,2],[2,5,0]], full:1},
-  {name:"Burrow", map:['RRR...RR','........','........','........','RRRR...R','........','........','RRRRRR..'], pieces:[['T',2],['J',2],['O',0]], sol:[[0,3,0],[1,4,4],[2,6,6]], full:1},
-  {name:"Acorn stash", map:['........','R.RRRRRR','........','R...RRRR','........','RRRRR...','........','........'], pieces:[['I',1],['S',3],['L',0]], sol:[[0,1,0],[1,2,2],[2,5,4]], full:1},
-  {name:"Owl hour", map:['........','RRRRRR..','........','R..RRR.R','RR.R.RRR','RRR..RRR','........','........'], pieces:[['J',1],['T',3],['S',3]], sol:[[0,6,1],[1,3,4],[2,1,2]], full:1},
-  {name:"Tall grass", map:['........','RR.RRRRR','........','........','........','R.RRRRRR','R..R.RRR','R.R...RR'], pieces:[['T',1],['T',0],['L',0]], sol:[[0,1,5],[1,3,6],[2,0,1]], full:1},
-  {name:"Barn door", map:['........','..RRRRRR','R...RRRR','........','........','........','........','R.RRRRRR'], pieces:[['S',2],['T',3],['T',3],['S',3]], sol:[[0,1,2],[1,0,0],[2,6,3],[3,0,5]], full:1},
-  {name:"Feed trough", map:['RRR...RR','........','........','........','........','RRRRRRR.','R..RRRR.','........'], pieces:[['I',3],['Z',2],['J',2],['Z',2]], sol:[[0,7,4],[1,3,2],[2,3,0],[3,1,6]], full:1},
-  {name:"Pebble path", map:['..RRRRRR','........','RR..RRRR','R..RRRRR','RRRR..RR','........','........','........'], pieces:[['J',2],['Z',0],['S',2],['Z',0]], sol:[[0,0,6],[1,4,4],[2,1,2],[3,0,0]], full:1},
-  {name:"Sunny patch", map:['........','RR....RR','RRRRRR.R','........','........','........','RRRR...R','........'], pieces:[['I',2],['J',3],['L',1],['J',0]], sol:[[0,2,1],[1,5,2],[2,0,3],[3,4,5]], full:1},
-  {name:"Log jam", map:['RRR...RR','........','........','RRRRRRR.','RR....RR','........','........','........'], pieces:[['T',2],['O',0],['J',2],['I',0]], sol:[[0,3,0],[1,5,6],[2,5,2],[3,2,4]], full:1},
-  {name:"Mossy corner", map:['........','........','........','RR.RR..R','........','RRR..RRR','RRR..RRR','........'], pieces:[['O',0],['O',0],['O',0],['I',1]], sol:[[0,3,4],[1,5,2],[2,3,6],[3,2,0]], full:1},
-  {name:"Chicken run", map:['.R.R.R..','.R.R....','...R....','...R.R..','.R.R.R..','.R...R..','.....R..','...R.R..'], pieces:[['T',0],['Z',2],['O',0],['Z',3]], sol:[[0,4,1],[1,2,5],[2,0,6],[3,0,2]], full:1},
-  {name:"Stepping stones", map:['........','........','..RR..RR','........','RRRR..RR','........','RRRRRR..','........'], pieces:[['Z',2],['O',0],['S',0],['Z',2]], sol:[[0,4,4],[1,4,1],[2,5,6],[3,0,2]], full:1},
-  {name:"Sheep dip", map:['........','........','........','..R.RRRR','RR...RRR','........','RRRRRR..','........'], pieces:[['O',0],['L',1],['O',0],['T',0]], sol:[[0,0,2],[1,3,0],[2,6,6],[3,2,3]], full:1},
-  {name:"Garden gate", map:['..RRRRRR','........','........','RRR.RR..','........','........','RRRR..RR','........'], pieces:[['Z',0],['Z',1],['Z',0],['O',0]], sol:[[0,3,5],[1,2,3],[2,0,0],[3,6,2]], full:1},
-  {name:"Rain puddle", map:['RRRR.R..','RRR.....','RR...R..','RR...R..','.RRR.R..','..RR.R..','R.RR.R..','RRRR.R..'], pieces:[['T',2],['S',3],['O',0],['S',3]], sol:[[0,3,1],[1,6,1],[2,2,2],[3,0,4]], full:1},
-  {name:"Hedgehog hollow", map:['..RRRRRR','........','RRRR.RRR','........','RRRRRR..','........','RRR..RRR','........'], pieces:[['Z',2],['Z',0],['D',0],['O',0]], sol:[[0,2,5],[1,0,0],[2,3,2],[3,6,3]], full:1},
-  {name:"Fox den", map:['........','........','R...RRRR','...RRRRR','........','RRRR.RRR','........','RRRR.RRR'], pieces:[['T',2],['J',2],['D',3],['T',1]], sol:[[0,1,2],[1,3,0],[2,0,3],[3,4,5]], full:1},
-  {name:"Cattail cove", map:['RRRR....','........','RRRRR..R','........','RR...RRR','........','........','RR.RRRRR'], pieces:[['I',2],['L',2],['L',2],['D',1]], sol:[[0,4,0],[1,2,4],[2,2,6],[3,5,1]], full:1},
-  {name:"Pinecone pile", map:['........','........','R..RRRRR','........','RR...RRR','RR.R.RRR','RRRR.R..','........'], pieces:[['L',1],['D',3],['L',2],['Z',1]], sol:[[0,4,5],[1,6,6],[2,2,4],[3,1,1]], full:1},
-  {name:"Rabbit warren", map:['........','........','RR...RRR','..R..RRR','........','........','...RRRRR','........'], pieces:[['E',1],['O',0],['T',3],['E',0]], sol:[[0,3,2],[1,0,3],[2,1,0],[3,0,6]], full:1},
-  {name:"Beaver dam", map:['........','RRRR..RR','........','..R..RRR','........','........','........','RRRRR..R'], pieces:[['E',3],['D',2],['O',0],['S',0]], sol:[[0,5,5],[1,3,3],[2,4,0],[3,0,2]], full:1},
-  {name:"Mole hills", map:['........','........','RR....RR','........','........','RRRRRR..','RRR....R','........'], pieces:[['J',1],['S',0],['E',0],['L',3]], sol:[[0,6,5],[1,1,2],[2,3,6],[3,4,2]], full:1},
-  {name:"Snowy field", map:['........','R....RRR','........','..R..RRR','........','........','R..RRRRR','........'], pieces:[['Z',3],['I',0],['D',3],['D',3]], sol:[[0,0,2],[1,1,1],[2,1,6],[3,3,3]], full:1},
-  {name:"Frozen pond", map:['RRRR....','........','..RR.RRR','........','........','........','RR..RRRR','........'], pieces:[['S',2],['O',0],['J',1],['E',3]], sol:[[0,5,0],[1,0,1],[2,4,0],[3,2,4]], full:1},
-  {name:"Starry night", map:['..R...RR','..R...RR','........','......R.','.......R','..R...RR','..R...RR','..R...RR'], pieces:[['J',0],['J',1],['S',2],['L',0],['D',3]], sol:[[0,3,2],[1,1,4],[2,4,4],[3,0,2],[4,6,2]], full:1},
-  {name:"Firefly glade", map:['.R.....R','.R......','.RR....R','..R....R','..R....R','.RR....R','.RR....R','.RR....R'], pieces:[['D',0],['J',3],['I',3],['I',0],['E',0]], sol:[[0,0,3],[1,4,2],[2,3,4],[3,4,1],[4,2,0]], full:1},
-  {name:"Moon path", map:['...RRRRR','........','........','RRR....R','........','RR.RRRRR','........','........'], pieces:[['J',0],['L',1],['Z',2],['E',0],['Z',3]], sol:[[0,4,6],[1,5,1],[2,2,2],[3,0,0],[4,1,5]], full:1},
-  {name:"Honeycomb", map:['........','RR.RRRRR','R...R.RR','RRRRR...','........','....R.RR','........','........'], pieces:[['J',0],['J',0],['Z',1],['T',0],['I',0]], sol:[[0,5,2],[1,0,6],[2,4,5],[3,1,1],[4,0,5]], full:1},
-  {name:"Beehive", map:['........','........','RRRR....','RRRRRRR.','R.RRRR..','R..R.RRR','........','........'], pieces:[['S',3],['O',0],['E',3],['D',0],['I',0]], sol:[[0,1,4],[1,6,0],[2,4,5],[3,6,3],[4,4,2]], full:1},
-  {name:"Mushroom ring", map:['........','........','........','RR.....R','........','RRRRR.RR','........','RRRRR..R'], pieces:[['J',2],['T',0],['L',3],['S',0],['S',3]], sol:[[0,0,0],[1,4,2],[2,4,4],[3,5,6],[4,2,2]], full:1},
-  {name:"Tumbleweed", map:['..RR.R..','........','...RRR..','...RRR..','..R.RR..','....RR..','..RR.R..','..RR....'], pieces:[['D',0],['L',0],['J',0],['L',3],['Z',2]], sol:[[0,3,0],[1,1,4],[2,4,6],[3,1,1],[4,5,1]], full:1},
-  {name:"Canyon", map:['R...RRRR','........','........','RR....RR','.R.RRRRR','........','RR...RRR','........'], pieces:[['T',0],['I',3],['J',0],['E',2],['L',2]], sol:[[0,2,5],[1,2,1],[2,0,4],[3,3,2],[4,1,0]], full:1},
-  {name:"River bend", map:['........','RRR.RRRR','RR..R..R','........','RRRR....','........','RR.....R','........'], pieces:[['I',0],['Z',3],['I',2],['T',0],['O',0]], sol:[[0,2,6],[1,2,1],[2,4,4],[3,5,6],[4,5,2]], full:1},
-  {name:"Waterfall", map:['..RR.RR.','.....RR.','...R..R.','......R.','..R.....','..RR..R.','...R.RR.','...R.RR.'], pieces:[['S',0],['I',2],['E',3],['S',3],['Z',3]], sol:[[0,4,4],[1,1,1],[2,1,5],[3,2,2],[4,4,2]], full:1},
-  {name:"Bamboo grove", map:['.RR...RR','.R....RR','.R....RR','..R...RR','..R....R','........','..R.....','.RR...RR'], pieces:[['I',1],['D',1],['O',0],['I',2],['S',3],['S',0]], sol:[[0,5,1],[1,2,1],[2,0,3],[3,3,6],[4,6,4],[5,0,5]], full:1},
-  {name:"Panda nap", map:['RRR..RRR','RR..R..R','........','RRRR.RR.','........','..RR..R.','........','RRR...RR'], pieces:[['E',3],['Z',2],['E',2],['S',2],['T',3],['T',3]], sol:[[0,4,3],[1,5,1],[2,3,6],[3,2,0],[4,6,3],[5,0,4]], full:1},
-  {name:"Jungle gym", map:['R.R..RR.','R.R..RR.','.....R..','.....R..','R.R..RR.','R.R...R.','R.......','R....RR.'], pieces:[['O',0],['Z',3],['D',1],['J',1],['T',0],['S',1]], sol:[[0,0,2],[1,2,1],[2,5,5],[3,3,3],[4,1,6],[5,6,2]], full:1},
-  {name:"Coral reef", map:['........','........','R..RRR.R','...RRR..','........','R....RRR','RRR..RRR','........'], pieces:[['O',0],['E',0],['Z',1],['S',3],['D',1],['O',0]], sol:[[0,2,4],[1,0,0],[2,3,5],[3,0,3],[4,6,2],[5,1,2]], full:1},
-  {name:"Tide pool", map:['R....R.R','R....R.R','R..R...R','R..R...R','...R.R.R','R.......','R..R.R..','R..R.R.R'], pieces:[['J',3],['T',2],['I',0],['S',2],['S',3],['J',1]], sol:[[0,0,2],[1,3,5],[2,1,0],[3,4,2],[4,6,4],[5,2,1]], full:1},
-  {name:"Sandcastle", map:['.R..R.RR','.R..R.RR','.R....RR','......R.','........','....R..R','......RR','.R....RR'], pieces:[['Z',1],['E',3],['O',0],['O',0],['I',2],['O',0]], sol:[[0,6,3],[1,3,1],[2,3,6],[3,0,5],[4,2,4],[5,0,3]], full:1},
-  {name:"Lighthouse", map:['.R.RR...','.R.RR...','.R.RR.R.','......R.','.R....R.','.R..R.R.','.R....R.','....R.R.'], pieces:[['S',2],['T',0],['L',0],['J',0],['T',1],['T',2]], sol:[[0,2,4],[1,1,6],[2,3,5],[3,2,2],[4,0,2],[5,5,0]], full:1},
-  {name:"Shipwreck", map:['.R.RR...','...RR...','.RRRR...','.RRR....','.R..R.R.','....R.R.','.RR...R.','......R.'], pieces:[['Z',0],['E',2],['I',0],['E',2],['O',0],['L',0]], sol:[[0,3,6],[1,4,2],[2,0,7],[3,1,4],[4,5,0],[5,0,0]], full:1},
-  {name:"Treasure map", map:['R.RR....','R.RR....','R.RR....','..RR....','......R.','......R.','..RR....','R.RR..R.'], pieces:[['I',1],['E',2],['D',1],['T',3],['J',3],['D',1]], sol:[[0,6,0],[1,1,4],[2,0,5],[3,4,0],[4,6,4],[5,0,3]], full:1},
-  {name:"Grand finale", map:['.....RR.','.R.R.RR.','.R......','.R....R.','.R.R.RR.','.R.R....','...R..R.','.R.R.RR.'], pieces:[['L',2],['D',2],['S',3],['J',2],['I',3],['I',2]], sol:[[0,5,2],[1,5,5],[2,3,2],[3,0,6],[4,2,2],[5,1,0]], full:1},
-  {name:"Parade day", map:['........','RR..RRRR','R....RR.','RRRRRR..','RR...R.R','........','........','RRR.....'], pieces:[['I',0],['J',0],['T',2],['Z',3],['O',0],['D',0]], sol:[[0,1,2],[1,3,6],[2,2,4],[3,6,2],[4,2,0],[5,6,6]], full:1},
-  {name:"Zoo keeper", map:['R...R.R.','....R.R.','R.....R.','RR....R.','RR....R.','R.....R.','RR......','RR..R.R.'], pieces:[['D',0],['D',0],['E',1],['O',0],['L',3],['L',3]], sol:[[0,0,0],[1,6,5],[2,3,2],[3,4,5],[4,1,5],[5,1,2]], full:1},
+  {name:'First steps', d:1, map:['........','........','........','........','........','........','........','RRRR....'], pieces:[['I',0],['O',0],['T',0]], sol:[[0,4,7]]},
+  {name:'Square peg', d:1, map:['........','........','........','........','........','........','RRR..RRR','RRR..RRR'], pieces:[['S',0],['O',0],['I',1]], sol:[[1,3,6]]},
+  // 60 more, made by puzzles/gen2.js on a steep ramp: each is replayed against its stored solution, which wins only on the last critter.
+  // d = difficulty 1-5 (paws), measured from how often a sensible random player solves it. sol = [critter number, x, y] in order.
+  {name:"Clover patch", d:1, map:['...RRRRR','........','..RRRRRR','........','........','RRRR.RRR','........','........'], pieces:[['L',2],['T',1],['Z',1]], sol:[[0,0,0],[1,4,5],[2,0,1]], full:1},
+  {name:"Daisy chain", d:1, map:['..RR..R.','..RR..R.','..RR..R.','..RR..R.','..R...R.','........','...R....','...R..R.'], pieces:[['S',0],['O',0],['O',0]], sol:[[0,2,4],[1,5,5],[2,1,6]], full:1},
+  {name:"Bumblebee", d:1, map:['...RRRRR','...RRRRR','........','........','........','RRRRR...','........','........'], pieces:[['L',2],['L',3],['J',2]], sol:[[0,0,0],[1,1,1],[2,5,5]], full:1},
+  {name:"Ladybug lane", d:1, map:['........','........','..R.RRRR','........','RRR.RRRR','........','RRRR...R','........'], pieces:[['T',1],['T',0],['S',3]], sol:[[0,3,2],[1,4,5],[2,0,1]], full:1},
+  {name:"Puddle jump", d:2, map:['RRR.....','RR......','RRR.....','RRR.....','RRR.....','RR......','..R.....','..R.....'], pieces:[['I',0],['O',0],['S',0]], sol:[[0,2,5],[1,0,6],[2,2,0]], full:1},
+  {name:"Dandelion", d:2, map:['..RR.R..','..RR.R..','...R....','........','...R....','..R..R..','..RR....','..RR.R..'], pieces:[['T',1],['Z',0],['T',1]], sol:[[0,5,2],[1,3,5],[2,2,2]], full:1},
+  {name:"Butterfly", d:2, map:['.R..RR..','.R..RR..','.R......','.R..RR..','.R..RR..','....RR..','....RR..','.R......'], pieces:[['I',0],['L',2],['S',0]], sol:[[0,3,7],[1,3,2],[2,0,5]], full:1},
+  {name:"Windmill", d:2, map:['........','RRR..RRR','R.R.R..R','R.RRR..R','R.RRRRRR','........','........','........'], pieces:[['O',0],['Z',1],['I',1]], sol:[[0,5,2],[1,3,0],[2,1,2]], full:1},
+  {name:"Hop to it", d:2, map:['.R....RR','.R....RR','.R.....R','.R.....R','.R....RR','.R......','.......R','.R....RR'], pieces:[['S',2],['J',2],['L',1],['I',2]], sol:[[0,5,5],[1,0,6],[2,5,0],[3,3,3]], full:1},
+  {name:"Fence line", d:2, map:['..R.RR..','....RR..','....RR..','....RR..','....RR..','..R.....','..R.....','..R.RR..'], pieces:[['I',0],['T',1],['J',3],['O',0]], sol:[[0,0,1],[1,2,2],[2,0,3],[3,4,5]], full:1},
+  {name:"Muddy boots", d:2, map:['.RR.....','.RR.....','.R...R..','.....R..','.RR..R..','.RR..R..','.RR.....','.RR.....'], pieces:[['J',1],['Z',1],['O',0],['O',0]], sol:[[0,0,3],[1,5,5],[2,2,2],[3,4,0]], full:1},
+  {name:"Hay bale", d:2, map:['.RRR....','.RRR....','..RR....','........','.RRR....','........','..RR....','.RRR....'], pieces:[['T',0],['L',2],['I',3],['T',0]], sol:[[0,3,2],[1,1,5],[2,7,3],[3,0,2]], full:1},
+  {name:"Pond skipper", d:2, map:['........','RRRRR.RR','RRR....R','RRRR.R.R','........','........','........','........'], pieces:[['I',2],['J',3],['J',2],['T',2]], sol:[[0,0,4],[1,5,2],[2,3,0],[3,3,2]], full:1},
+  {name:"Lily pads", d:2, map:['........','........','........','........','R.RRRR.R','...RRR.R','........','RR.RRR.R'], pieces:[['T',2],['T',2],['I',3],['T',0]], sol:[[0,4,2],[1,1,6],[2,6,4],[3,0,4]], full:1},
+  {name:"Burrow", d:3, map:['.R.RR...','.R.RR...','.R......','.R......','.R.RR...','.R.R....','.R......','...RR...'], pieces:[['Z',0],['O',0],['J',0],['S',0]], sol:[[0,5,6],[1,3,2],[2,0,6],[3,3,5]], full:1},
+  {name:"Acorn stash", d:3, map:['........','RR.R..RR','........','RRRR...R','........','........','R..RRRRR','........'], pieces:[['T',2],['L',0],['Z',3],['O',0]], sol:[[0,1,0],[1,4,2],[2,4,0],[3,1,5]], full:1},
+  {name:"Owl hour", d:3, map:['R...R.R.','R...R...','....R.R.','R....RR.','R....RR.','R...R...','R...RR..','R...RRR.'], pieces:[['L',3],['O',0],['T',1],['Z',2]], sol:[[0,0,2],[1,3,3],[2,5,0],[3,5,5]], full:1},
+  {name:"Tall grass", d:3, map:['..R....R','..R...RR','..R...RR','......RR','..R.....','........','......RR','..R...RR'], pieces:[['O',0],['J',0],['I',0],['S',3]], sol:[[0,6,4],[1,1,2],[2,3,0],[3,2,5]], full:1},
+  {name:"Barn door", d:2, map:['.R.RR..R','.R.RR..R','.R.RR..R','.R.....R','...RR...','...RR...','.......R','....R..R'], pieces:[['I',0],['T',2],['O',0],['I',3]], sol:[[0,2,3],[1,2,6],[2,6,4],[3,1,4]], full:1},
+  {name:"Feed trough", d:2, map:['........','RR.RRRRR','........','........','..RRR...','........','........','R.RRRRRR'], pieces:[['Z',1],['Z',3],['E',0],['T',1]], sol:[[0,0,3],[1,1,5],[2,5,4],[3,2,1]], full:1},
+  {name:"Pebble path", d:3, map:['.RRRRR.R','..RRRR..','........','RRRRR..R','........','........','........','........'], pieces:[['Z',2],['D',3],['T',1],['S',1]], sol:[[0,5,3],[1,3,4],[2,0,0],[3,6,0]], full:1},
+  {name:"Sunny patch", d:3, map:['........','........','........','RRR..R..','........','RRRR..RR','RRRRRR.R','RRRRR...'], pieces:[['O',0],['D',1],['T',0],['Z',0]], sol:[[0,3,2],[1,6,2],[2,5,6],[3,3,4]], full:1},
+  {name:"Log jam", d:3, map:['........','.RRRRRRR','........','.RRRRR.R','........','........','RR.R...R','RR...RRR'], pieces:[['I',3],['L',3],['E',2],['J',0]], sol:[[0,0,0],[1,5,2],[2,4,5],[3,2,6]], full:1},
+  {name:"Mossy corner", d:3, map:['..RR....','..RR....','.RR.....','.RRR....','...R....','..RR....','.RR.....','.RR.....'], pieces:[['Z',1],['S',0],['Z',2],['O',0]], sol:[[0,3,5],[1,0,4],[2,3,2],[3,0,0]], full:1},
+  {name:"Chicken run", d:3, map:['......RR','......RR','......RR','R..RRR..','.......R','......RR','.......R','......RR'], pieces:[['J',1],['T',1],['E',0],['S',2]], sol:[[0,1,3],[1,5,5],[2,0,6],[3,5,3]], full:1},
+  {name:"Stepping stones", d:3, map:['........','RRR.R..R','........','........','RRRRR..R','RRRRR..R','........','RRR..RRR'], pieces:[['O',0],['O',0],['Z',1],['Z',0]], sol:[[0,5,4],[1,3,6],[2,2,1],[3,4,0]], full:1},
+  {name:"Sheep dip", d:4, map:['........','RRRR..RR','........','........','R...RRRR','........','........','R..R.RRR'], pieces:[['O',0],['O',0],['L',2],['E',1]], sol:[[0,4,1],[1,1,6],[2,1,4],[3,3,5]], full:1},
+  {name:"Garden gate", d:4, map:['...RRR..','...RRR..','....RRR.','.....RR.','........','...RR...','...RR...','......R.'], pieces:[['L',0],['E',1],['O',0],['E',3]], sol:[[0,3,6],[1,5,4],[2,6,0],[3,3,2]], full:1},
+  {name:"Rain puddle", d:3, map:['........','........','R..RRRRR','........','RRRR....','R..RR..R','RR....RR','........'], pieces:[['Z',2],['Z',0],['S',0],['O',0],['Z',1]], sol:[[0,4,6],[1,1,5],[2,5,4],[3,4,3],[4,1,1]], full:1},
+  {name:"Hedgehog hollow", d:3, map:['........','....RRRR','RRRRRRR.','.RRRRR..','........','R.RR.RRR','R.....RR','........'], pieces:[['Z',1],['I',2],['E',0],['T',1],['S',3]], sol:[[0,6,2],[1,0,1],[2,1,6],[3,4,5],[4,0,3]], full:1},
+  {name:"Fox den", d:3, map:['..R.RR..','....R...','..R.R...','..R.....','.RR.....','..R.RR..','....RR..','.RR.RR..'], pieces:[['J',0],['L',1],['J',0],['O',0],['Z',0]], sol:[[0,1,5],[1,5,1],[2,4,3],[3,0,2],[4,0,0]], full:1},
+  {name:"Cattail cove", d:3, map:['R.RRRR..','R..RRR..','........','RRRR...R','RR.RRR.R','RR..RRRR','........','........'], pieces:[['S',1],['D',1],['O',0],['D',3],['J',2]], sol:[[0,1,0],[1,2,4],[2,6,0],[3,0,6],[4,4,3]], full:1},
+  {name:"Pinecone pile", d:3, map:['........','R.RRRR..','........','RRR...RR','R.....RR','R..RRRRR','........','........'], pieces:[['J',3],['E',0],['O',0],['D',0],['D',1]], sol:[[0,0,0],[1,1,4],[2,6,0],[3,4,3],[4,3,2]], full:1},
+  {name:"Rabbit warren", d:4, map:['........','........','........','RRR...RR','........','R.RR...R','..RR...R','RRRRRR.R'], pieces:[['I',3],['E',3],['D',0],['S',2],['T',0]], sol:[[0,6,4],[1,4,4],[2,0,5],[3,2,0],[4,3,2]], full:1},
+  {name:"Beaver dam", d:4, map:['........','R.R..RRR','........','RRRRR.RR','........','RRR..RRR','RRRRR..R','........'], pieces:[['D',0],['D',3],['E',0],['S',2],['O',0]], sol:[[0,0,1],[1,4,2],[2,3,4],[3,4,6],[4,3,0]], full:1},
+  {name:"Mole hills", d:4, map:['........','RRRRR..R','RR.RR..R','........','........','........','RRR...RR','RR...RRR'], pieces:[['I',1],['J',0],['I',3],['E',0],['T',0]], sol:[[0,5,1],[1,2,2],[2,6,0],[3,4,5],[4,2,6]], full:1},
+  {name:"Snowy field", d:4, map:['RRRR...R','........','........','RRR..RRR','........','.RR....R','..RR..RR','........'], pieces:[['O',0],['I',0],['T',1],['E',0],['E',0]], sol:[[0,4,6],[1,3,5],[2,0,5],[3,3,2],[4,4,0]], full:1},
+  {name:"Frozen pond", d:4, map:['RR..RRRR','........','RR.RR...','........','........','RRR..RRR','........','RRR.RRRR'], pieces:[['J',3],['T',1],['D',2],['O',0],['T',0]], sol:[[0,3,3],[1,2,2],[2,3,6],[3,2,0],[4,5,1]], full:1},
+  {name:"Starry night", d:4, map:['...RR..R','R......R','R..R...R','R..RR..R','R...R..R','R...R..R','....R..R','R..R....'], pieces:[['T',3],['D',3],['D',3],['Z',2],['I',2],['T',2]], sol:[[0,2,4],[1,3,1],[2,5,4],[3,0,6],[4,4,7],[5,0,0]], full:1},
+  {name:"Firefly glade", d:4, map:['........','........','..RRRRRR','......RR','RR..RRR.','RR.RRR..','........','........'], pieces:[['I',2],['I',3],['O',0],['L',0],['D',2]], sol:[[0,2,3],[1,7,4],[2,0,2],[3,4,5],[4,2,4]], full:1},
+  {name:"Moon path", d:4, map:['....R.RR','.R..R...','.R..R...','......RR','......RR','......RR','.R....RR','.R..R.RR'], pieces:[['O',0],['O',0],['O',0],['D',2],['J',3],['E',2]], sol:[[0,2,5],[1,4,5],[2,3,3],[3,0,0],[4,0,3],[5,5,1]], full:1},
+  {name:"Honeycomb", d:4, map:['.RRR.RR.','.R.R....','...R....','.R...RR.','.RRR.RR.','......R.','.RRR..R.','.RRR.RR.'], pieces:[['L',1],['I',0],['Z',3],['E',2],['L',1]], sol:[[0,2,1],[1,0,5],[2,4,5],[3,4,1],[4,0,0]], full:1},
+  {name:"Beehive", d:4, map:['..R.RR..','..R.RR..','....RR..','..R..R.R','.......R','..R....R','..R..R.R','..R.RR.R'], pieces:[['Z',2],['T',0],['D',1],['L',3],['D',2]], sol:[[0,0,1],[1,3,3],[2,1,3],[3,6,0],[4,4,5]], full:1},
+  {name:"Mushroom ring", d:5, map:['.RR....R','.RR.R..R','.R..R..R','....RR.R','.RR.RR..','.RR.RR..','.RR..R..','.R..RR..'], pieces:[['J',1],['I',1],['D',0],['E',3],['S',2]], sol:[[0,3,0],[1,7,4],[2,1,2],[3,5,0],[4,2,6]], full:1},
+  {name:"Tumbleweed", d:5, map:['.RRRRRR.','....RR..','.RR.RR..','.R....R.','...R..R.','.RR...R.','.RR.RRR.','.RR...R.'], pieces:[['E',2],['I',0],['D',1],['J',0],['J',0],['L',0]], sol:[[0,3,4],[1,0,1],[2,6,1],[3,3,2],[4,3,6],[5,0,3]], full:1},
+  {name:"Canyon", d:5, map:['RR.RRRRR','........','........','..RRRRRR','........','R.R..R..','R.R..RR.','........'], pieces:[['L',3],['S',3],['T',0],['O',0],['D',0]], sol:[[0,0,3],[1,6,4],[2,0,6],[3,3,5],[4,1,0]], full:1},
+  {name:"River bend", d:5, map:['........','RR.R..RR','........','........','RR...R.R','RRR..R.R','RRRR..RR','........'], pieces:[['T',2],['E',3],['D',2],['S',1],['I',1]], sol:[[0,2,4],[1,4,0],[2,2,0],[3,4,5],[4,6,2]], full:1},
+  {name:"Waterfall", d:5, map:['........','RRRR..RR','........','RRRRR..R','........','R.......','........','R.RRRR.R'], pieces:[['J',1],['S',3],['J',0],['Z',2],['J',1]], sol:[[0,6,5],[1,5,2],[2,3,4],[3,3,0],[4,1,5]], full:1},
+  {name:"Bamboo grove", d:4, map:['...R.RR.','...R.RR.','R..R..R.','R..R..R.','R....RR.','R..R.R..','R..R.R..','.....RR.'], pieces:[['S',3],['E',1],['Z',0],['S',3],['D',0],['S',2]], sol:[[0,4,1],[1,6,5],[2,1,3],[3,0,0],[4,3,6],[5,0,6]], full:1},
+  {name:"Panda nap", d:5, map:['........','........','R..RRR.R','........','RRRR...R','.R.RRRR.','....RR..','R.R.RR.R'], pieces:[['E',2],['T',1],['Z',3],['S',1],['S',1],['S',3]], sol:[[0,4,3],[1,1,1],[2,6,5],[3,2,5],[4,5,0],[5,0,5]], full:1},
+  {name:"Jungle gym", d:5, map:['R..RR..R','R..RR..R','R...R..R','........','R...R...','....R...','R......R','R..RR..R'], pieces:[['I',2],['Z',0],['E',2],['I',0],['T',1],['E',2]], sol:[[0,3,6],[1,5,2],[2,0,2],[3,0,5],[4,3,2],[5,5,4]], full:1},
+  {name:"Coral reef", d:5, map:['RRRR..R.','RRRR..R.','.R......','...R..R.','........','..R...R.','..RR..R.','RRRR..R.'], pieces:[['J',2],['Z',2],['I',2],['D',0],['O',0],['L',1]], sol:[[0,5,4],[1,2,4],[2,3,2],[3,1,2],[4,0,5],[5,0,2]], full:1},
+  {name:"Tide pool", d:5, map:['RRRR...R','........','RR....RR','........','........','........','..RRR..R','.RRRRRRR'], pieces:[['T',1],['O',0],['O',0],['D',1],['T',1],['D',3]], sol:[[0,2,1],[1,4,2],[2,5,5],[3,4,0],[4,0,5],[5,5,0]], full:1},
+  {name:"Sandcastle", d:5, map:['..R.R.R.','......R.','R...R...','......R.','RRR.....','RRR...R.','RRR.R.R.','RRR.R.R.'], pieces:[['T',3],['E',0],['T',2],['T',2],['O',0],['S',0]], sol:[[0,6,1],[1,4,4],[2,2,1],[3,2,3],[4,0,0],[5,0,2]], full:1},
+  {name:"Lighthouse", d:5, map:['R..RRR.R','R..RRR.R','...RRR..','R...R...','R....R..','R.......','.....R..','R..RRR..'], pieces:[['E',2],['I',1],['E',2],['T',1],['I',3],['J',2]], sol:[[0,5,2],[1,3,3],[2,0,1],[3,4,4],[4,7,4],[5,0,6]], full:1},
+  {name:"Shipwreck", d:5, map:['RR.RR..R','RR.RRR..','...RRRRR','........','R.R..RRR','........','.RRR..RR','........'], pieces:[['E',1],['I',1],['E',0],['Z',0],['Z',2],['D',2]], sol:[[0,0,2],[1,2,0],[2,3,3],[3,4,6],[4,5,0],[5,0,5]], full:1},
+  {name:"Treasure map", d:5, map:['.R..RRRR','.R..R.RR','....R..R','........','.R...RR.','....RRR.','.....RR.','.......R'], pieces:[['D',0],['L',1],['S',2],['I',3],['E',3],['J',0]], sol:[[0,3,3],[1,1,5],[2,0,2],[3,7,3],[4,5,1],[5,4,6]], full:1},
+  {name:"Grand finale", d:5, map:['R.R.....','R.R...RR','R.R...RR','......RR','R.R....R','..R.....','R......R','R.....RR'], pieces:[['S',2],['D',0],['L',2],['Z',2],['T',0],['D',0]], sol:[[0,4,6],[1,1,6],[2,5,0],[3,5,4],[4,0,2],[5,0,4]], full:1},
+  {name:"Parade day", d:5, map:['R..RRRRR','........','RRRR..RR','R......R','R..RR..R','........','RR..R...','RRR.RR.R'], pieces:[['O',0],['E',0],['T',2],['E',1],['Z',3],['D',2]], sol:[[0,5,3],[1,1,3],[2,5,6],[3,2,5],[4,4,1],[5,1,0]], full:1},
+  {name:"Zoo keeper", d:5, map:['RR..RR.R','RR...R.R','RR..R..R','........','..R.RR..','.R..RRRR','........','........'], pieces:[['Z',3],['S',2],['Z',3],['J',3],['D',2],['Z',0]], sol:[[0,0,3],[1,2,1],[2,2,4],[3,5,0],[4,2,0],[5,5,3]], full:1},
 ];
 // the puzzle map groups puzzles into chapters
 const CHAPTERS=[{name:'Meadow',icon:'🌼',n:10},{name:'Barnyard',icon:'🐓',n:10},{name:'Pond',icon:'🐸',n:10},{name:'Forest',icon:'🌲',n:10},{name:'Mountains',icon:'⛰️',n:10},{name:'Starry night',icon:'🌙',n:12}];
 function rocksLeft(){ let n=0; if(pen) for(const r of pen) for(const c of r) if(c&&c.t==='R') n++; return n; }
-function newLevel(n){
+function newLevel(n,retry){
   gameStart=Date.now();
+  if(retry&&lvRun&&lvRun.n===n) lvRun.tries++; else lvRun={n,tries:0,hints:0};
   if(mode!=='levels'||over) markPlayed();
   levelIdx=n; mode='levels'; const L=LEVELS[n];
   pen=L.map.map((row,y)=>[...row].map((ch,x)=>ch==='R'?{t:'R',part:'rock',rot:0,id:'r'+y+'_'+x}:null));
@@ -3184,10 +3209,15 @@ function levelIntro(n){
   const ul=document.createElement('ol'); ul.className='rules';
   [['🪨',`Break all ${rocks} grey rocks to win.`],['🧺',L.pieces.length>3?`You get ${L.pieces.length} critters, three at a time. The next ones show under the tray.`:'Drag the three critters from the tray into the pen.'],['➖','Fill a whole row or column and everything in it clears, rocks included.'],['🚫','Critters can\'t be turned, so the order matters.']]
     .forEach(([ic,tx])=>{ const li=document.createElement('li'); const i=document.createElement('span'); i.className='ic'; i.textContent=ic; const t=document.createElement('span'); t.textContent=tx; li.append(i,t); ul.append(li); });
-  showOverlay({eyebrow:`${chapterOf(n).icon} ${chapterOf(n).name} · Puzzle ${n+1}`, title:L.name, text:'', extra:ul, noRemember:true,
+  showOverlay({eyebrow:`${chapterOf(n).icon} ${chapterOf(n).name} · Puzzle ${n+1}`, title:L.name, text:diffLabel(n), extra:ul, noRemember:true,
     buttons:[{label:'Start',cls:'big pen',fn:hideOverlay}], note:'Stuck? Tap Hint at the top to see where the next critter goes.'});
 }
-let hint=null, lvMoves=[];
+let hint=null, lvMoves=[], lvRun=null;
+// difficulty in paws (measured when the puzzle was made); 'clean' = solved at least once without a hint
+const DIFF=['','Easy','Medium','Tricky','Hard','Expert'];
+function pawStr(d){ return '🐾'.repeat(d); }
+function diffLabel(n){ const d=LEVELS[n].d||1; return `${pawStr(d)} ${DIFF[d]}`; }
+function lvClean(n){ return !!(PR.lvClean||{})[n]; }
 // Finds a way to clear every rock from the current position (same rules as the game). Returns [critter number, x, y] or null.
 function solveFrom(nodeCap){
   const cellsOf=pc=>pc.cells.map(k=>[k.x,k.y]);
@@ -3224,18 +3254,18 @@ function showHint(){
   if(L.full && lvMoves.length<L.sol.length && lvMoves.every((m,i)=>m[0]===L.sol[i][0]&&m[1]===L.sol[i][1]&&m[2]===L.sol[i][2])) step=L.sol[lvMoves.length];
   if(!step) step=solveFrom(300000);
   const slot=step?tray.indexOf(seq[step[0]]):-1;
-  if(slot>=0 && canPlace(tray[slot],step[1],step[2])){ hint={i:slot,gx:step[1],gy:step[2],t:0}; sfx('rotate'); }
+  if(slot>=0 && canPlace(tray[slot],step[1],step[2])){ hint={i:slot,gx:step[1],gy:step[2],t:0}; sfx('rotate'); if(lvRun) lvRun.hints++; }
   else toast('There\'s no way to clear every rock from here. Tap Restart to try again.');
 }
-function restartLevel(){ if(mode==='levels'&&running&&!over){ closeStickerPop(); const n=levelIdx; useLife('levels',()=>newLevel(n),true); } }
+function restartLevel(){ if(mode==='levels'&&running&&!over){ closeStickerPop(); const n=levelIdx; useLife('levels',()=>newLevel(n,true),true); } }
 function chapterOf(n){ let a=0; for(const ch of CHAPTERS){ if(n<a+ch.n) return {...ch,from:a}; a+=ch.n; } return {...CHAPTERS[CHAPTERS.length-1],from:a-CHAPTERS[CHAPTERS.length-1].n}; }
 function showLevels(){
   // first visit to Puzzles (for everyone, new or existing players): the short walkthrough, then the puzzle map
-  if(!PR.seenPzTour){ PR.seenPzTour=1; if(!PR.seenLevel) PR.seenLevel={}; PR.seenLevel[0]=1; saveP(); showTour(PZ_TOUR,0,{name:'Puzzles',first:true,done:showLevels}); return; }
+  if(!PR.seenPzTour){ PR.seenPzTour=1; if(!PR.seenLevel) PR.seenLevel={}; PR.seenLevel[0]=1; saveP(); showTour(PZ_TOUR,0,{name:'How to play · Puzzles',first:true,done:showLevels}); return; }
   const wrap=document.createElement('div'); wrap.className='lvmap';
   const firstOpen=LEVELS.findIndex((_,i)=>!PR.levels[i]); let focus=null, a=0;
-  const top=document.createElement('div'); top.className='lvtop'; const rb=document.createElement('button'); rb.type='button'; rb.className='rulesbtn maprules'; rb.textContent='? Rules';
-  rb.addEventListener('click',()=>showTour(PZ_TOUR,0,{name:'Puzzle rules',done:showLevels})); top.append(livesPill(),rb); wrap.append(top);
+  const top=document.createElement('div'); top.className='lvtop'; const rb=document.createElement('button'); rb.type='button'; rb.className='rulesbtn maprules'; rb.textContent='? How to play';
+  rb.addEventListener('click',()=>showTour(PZ_TOUR,0,{name:'How to play · Puzzles',done:showLevels})); top.append(livesPill(),rb); wrap.append(top);
   CHAPTERS.forEach(ch=>{
     const from=a; a+=ch.n; const solved=LEVELS.slice(from,a).filter((_,j)=>PR.levels[from+j]).length;
     const locked = firstOpen>=0 && from>firstOpen;
@@ -3243,23 +3273,26 @@ function showLevels(){
     const h=document.createElement('h3'); const ic=document.createElement('span'); ic.className='chic'; ic.textContent=ch.icon; const nm=document.createElement('b'); nm.textContent=ch.name;
     const ct=document.createElement('small'); ct.textContent= locked?'🔒 Locked': solved===ch.n?'All solved ✓':`${solved} of ${ch.n}`; h.append(ic,nm,ct);
     const grid=document.createElement('div'); grid.className='lvls';
-    for(let i=from;i<a;i++){ const L=LEVELS[i]; const b=document.createElement('button'); b.type='button'; b.textContent=i+1; const done=!!PR.levels[i];
+    for(let i=from;i<a;i++){ const L=LEVELS[i]; const b=document.createElement('button'); b.type='button'; b.textContent=i+1; const done=!!PR.levels[i]; b.dataset.paws='•'.repeat(L.d||1); if(done&&lvClean(i)) b.classList.add('clean');
       const open=done||i<=(firstOpen<0?LEVELS.length:firstOpen); if(done) b.classList.add('done'); if(i===firstOpen){ b.classList.add('next'); focus=b; } b.disabled=!open;
-      b.setAttribute('aria-label',`Puzzle ${i+1}: ${L.name}${done?', solved':open?'':', locked'}`); b.title=L.name;
+      b.setAttribute('aria-label',`Puzzle ${i+1}: ${L.name}, ${DIFF[L.d||1]}${done?', solved':open?'':', locked'}`); b.title=L.name;
       if(open) b.addEventListener('click',()=>useLife('levels',()=>gate(()=>newLevel(i)))); grid.append(b); }
     sec.append(h,grid); wrap.append(sec); });
   showOverlay({eyebrow:'Break the rocks', title:'Puzzles', text:'Fill rows or columns that run through the grey rocks to break them. Break every rock to win.',
     extra:wrap, noRemember:true, buttons:[], back:showStart,
-    note:`${Object.keys(PR.levels).length} of ${LEVELS.length} solved. Solving a puzzle gives its life back.` });
+    note:`${Object.keys(PR.levels).length} of ${LEVELS.length} solved. Dots show difficulty, a yellow ✓ means solved without a hint. Solving gives its life back.` });
   if(focus) requestAnimationFrame(()=>{ const card=overlay.querySelector('.card'), r=focus.getBoundingClientRect(), cr=card.getBoundingClientRect(); if(r.bottom>cr.bottom-20) card.scrollTop+=r.top-cr.top-cr.height/2; });
 }
 function levelWin(){
   countGame();
   confettiBurst(110); sfx('cheer');
   penEnding=false; over=true; running=false; const n=levelIdx, first=!PR.levels[n];
-  PR.levels[n]=Date.now(); G.levelSolved=true; refundLife(); progressCheck();
+  const run=lvRun&&lvRun.n===n?lvRun:{tries:0,hints:0}, clean=!run.hints;
+  PR.levels[n]=Date.now(); if(clean){ PR.lvClean=PR.lvClean||{}; PR.lvClean[n]=1; } G.levelSolved=true; refundLife(); progressCheck();
   const hasNext=n+1<LEVELS.length;
-  showOverlay({eyebrow:`Puzzle ${n+1} · ${LEVELS[n].name}`, title:'Solved!', text: first?'Every rock is cleared.':'Solved again. Nice and tidy.',
+  const st=document.createElement('div'); st.className='windiff'; st.textContent=diffLabel(n);
+  const why= clean ? (run.tries?'Solved without a hint!':'First try, no hints!') : 'Every rock is cleared. Try it without a hint for a ✓.';
+  showOverlay({eyebrow:`Puzzle ${n+1} · ${LEVELS[n].name}`, title:'Solved!', text: why, extra:st,
     buttons: hasNext?[{label:'Next puzzle',cls:'big small pen',fn:()=>useLife('levels',()=>gate(()=>newLevel(n+1)))},{label:'All puzzles',cls:'big small ghost',fn:showLevels}]
       :[{label:'All puzzles',cls:'big small pen',fn:showLevels}],
     note: hasNext?'':'That was the last puzzle. More coming!'});
@@ -3269,7 +3302,7 @@ function levelFail(quit){
   penEnding=false; over=true; running=false; menuOpen=false; const n=levelIdx;
   showOverlay({eyebrow:`Puzzle ${n+1} · ${LEVELS[n].name}`, title: quit?'Puzzle left':'Out of moves',
     text: quit?'Come back to it any time.':`${plural(rocksLeft(),'rock')} still in the pen. Try a different order.`,
-    buttons:[{label:'Try again',cls:'big small pen',fn:()=>useLife('levels',()=>gate(()=>newLevel(n)))},{label:'All puzzles',cls:'big small ghost',fn:showLevels}], extra:livesPill()});
+    buttons:[{label:'Try again',cls:'big small pen',fn:()=>useLife('levels',()=>gate(()=>newLevel(n,true)))},{label:'All puzzles',cls:'big small ghost',fn:showLevels}], extra:livesPill()});
 }
 
 /* ---------- settings: sound, haptics, dark mode (+ developer tools) ---------- */
@@ -3393,15 +3426,18 @@ function openSettings(){
     sw_('Haptics', nativeHaptics()?'Little taps and thumps as critters land':'Vibration on Android phones. iPhones don\'t let web pages vibrate.', ()=>SET.haptics, v=>{ SET.haptics=v; if(v) buzz(30); }),
     sw_('Music', 'A bouncy tune while you play', ()=>SET.music!==false, v=>{ SET.music=v; }),
     sw_('Animal sounds', 'A tiny yip, ribbit or mew as each critter lands', ()=>SET.voices!==false, v=>{ SET.voices=v; if(v) voice('T'); }),
-    ...((bridge('notify')||DEV)?[sw_('Daily reminder', `A nudge at ${fmtHour(remindState().hour)} when the Daily stack is ready`, ()=>remindState().on, v=>{ const st=remindState(); st.asked=true; if(v){ if(!post('notify',{type:'requestPermission'})){ st.on=true; toast('Dev build: reminders schedule in the iPhone app'); } } else { st.on=false; scheduleReminders(); } saveP(); })]:[]),
-    sw_('Wild critters', 'Baby ducklings and jumbo elephants drop in now and then (always on in the Daily stack)', ()=>SET.specials!==false, v=>{ SET.specials=v; }),
+    ...((bridge('notify')||DEV)?[sw_('Daily reminder', `A nudge at ${fmtHour(remindState().hour)} when the Daily Stack is ready`, ()=>remindState().on, v=>{ const st=remindState(); st.asked=true; if(v){ if(!post('notify',{type:'requestPermission'})){ st.on=true; toast('Dev build: reminders schedule in the iPhone app'); } } else { st.on=false; scheduleReminders(); } saveP(); })]:[]),
+    sw_('Wild critters', 'Baby ducklings and jumbo elephants drop in now and then (always on in the Daily Stack)', ()=>SET.specials!==false, v=>{ SET.specials=v; }),
     sw_('Dark mode', SET.dark===null?'Following your device for now':'', ()=>applyTheme(), v=>{ SET.dark=v; applyTheme(); buildZoo(); drawSide(); })
   );
   const nmRow=document.createElement('label'); nmRow.className='sw name-row'; nmRow.htmlFor='setName';
-  const nmTx=document.createElement('span'); nmTx.textContent='Your name'; const nmSm=document.createElement('small'); nmSm.textContent='Shown on the welcome screen and high scores'; nmTx.append(nmSm);
-  const nmIn=document.createElement('input'); nmIn.id='setName'; nmIn.maxLength=14; nmIn.autocomplete='off'; nmIn.value=getName();
-  guardName(nmIn,nmSm,v=>{ setName(v||'Player'); updateMePlate(); });
-  nmRow.append(nmTx,nmIn); list.prepend(nmRow);
+  const nmTx=document.createElement('span'); nmTx.textContent='Your name'; const nmSm=document.createElement('small'); nmTx.append(nmSm);
+  if(gcAlias){ nmSm.textContent='From Game Center'; nmSm.className='keep';
+    const nmV=document.createElement('b'); nmV.className='gcname'; nmV.textContent=gcAlias; nmRow.append(nmTx,nmV); }
+  else { nmSm.textContent='Leaderboards need Game Center sign-in (iPhone Settings › Game Center)'; nmSm.className='keep';
+    const nmIn=document.createElement('input'); nmIn.id='setName'; nmIn.maxLength=14; nmIn.autocomplete='off'; nmIn.placeholder='Player'; const cur=getName(); nmIn.value=cur==='Player'?'':cur;
+    guardName(nmIn,nmSm,v=>{ setName(v||'Player'); updateMePlate(); }); nmRow.append(nmTx,nmIn); }
+  list.prepend(nmRow);
   const crRow=document.createElement('label'); crRow.className='sw name-row'; crRow.htmlFor='setCrest';
   const crTx=document.createElement('span'); crTx.textContent='Crest critter'; const crSm=document.createElement('small'); crSm.textContent='Your badge on the leaderboards'; crTx.append(crSm);
   const crSel=document.createElement('select'); crSel.id='setCrest'; crSel.className='crestsel';
@@ -3498,7 +3534,7 @@ function simulate(kind){
 }
 function resetAll(){
   try{ Object.keys(localStorage).filter(k=>/^critter(Progress|Scores|Daily-|Best|PenBest|Name)/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(e){}
-  PR=loadP(); quitToMenu(); buildZoo(); showNamePrompt(); toast('All progress erased');
+  PR=loadP(); quitToMenu(); buildZoo(); showTutorial(0,{first:true}); toast('All progress erased');
 }
 
 /* ---------- store ----------
@@ -3697,7 +3733,7 @@ function illus(kind){
 const TUT=[
   {art:'critters', title:'Every block is a critter', text:'Seven animals fall into the tank, each striking a pose that fits its block shape.'},
   {art:'controls', title:'Steer them', text:()=>coarsePtr()
-      ? 'Drag anywhere on the board to slide a critter. It waits while you hold. Tap to turn it, flick down to drop it, and tap Skip to swap in the next one.'
+      ? 'Drag anywhere on the board to slide a critter while it falls. Tap to turn it, flick down to drop it, and tap Skip to swap in the next one.'
       : 'Use ← and → to move, ↑ to turn and Space to drop. Tap the Skip button to swap out a critter you don\'t want. You can also drag with the mouse.'},
   {art:'row', title:'Fill a row to send them home', text:'When a row is full, every critter in it goes home to your zoo and you score points.'},
   {art:'bonus', title:'Watch for bonuses', text:'Clear all four squares of one animal at once for a big bonus. Golden critters are worth even more, and matching animals that touch become buddies.'},
@@ -3711,8 +3747,8 @@ function modesList(){
   const ul=document.createElement('ol'); ul.className='rules modes';
   [['#16936A','Petting Zoo','Relax and stack as long as you like.'],
    ['#B8264B','Challenge','Race the clock: it speeds up every 20 seconds. Unlocks at 2,000 points in the Petting Zoo.'],
-   ['#C98A12','Daily stack','Everyone gets the same 100 critters. 3 tries a day, no skips or undos, top 3 win prizes.'],
-   ['#1F55B8','Critter pen','Drag critters into a pen and clear rows or columns. Opens after 20 critters go home.'],
+   ['#C98A12','Daily Stack','Everyone gets the same 100 critters. 3 tries a day, no skips or undos, top 3 win prizes.'],
+   ['#1F55B8','Critter Pen','Drag critters into a pen and clear rows or columns. Opens after 20 critters go home.'],
    ['#6E36B0','Puzzles','62 brain-teasers: break every rock with the critters you\'re given.']]
     .forEach(([col,name,tx])=>{ const li=document.createElement('li'); const i=document.createElement('span'); i.className='chip-dot'; i.style.background=col;
       const t=document.createElement('span'); const b=document.createElement('b'); b.textContent=name+' '; t.append(b,tx); li.append(i,t); ul.append(li); });
@@ -3768,10 +3804,10 @@ function showNamePrompt(){
   inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } });
   wrap.append(helloLive(),inp);
   showOverlay({eyebrow:'Welcome to Critter Stack', title:'What should we call you?', text:'', extra:wrap, noRemember:true,
-    buttons:[{label:'Next',cls:'big',fn:go}], note:'Shown on your welcome screen and high scores. You can change it in Settings.'});
+    buttons:[{label:'Next',cls:'big',fn:go}], note:'Shown on your welcome screen and in-game high scores.'});
   if(!coarsePtr()) setTimeout(()=>inp.focus(),60);
 }
-/* ---------- short walkthroughs for the Critter pen and Puzzles (first time, and from the ? Rules button) ---------- */
+/* ---------- short walkthroughs for the Critter Pen and Puzzles (first time, and from the ? How to play button) ---------- */
 function penArt(kind){
   const T=tallArt(), W=280,H=T?196:124,d=Math.min(window.devicePixelRatio||1,2.5), cv=document.createElement('canvas');
   cv.width=W*d; cv.height=H*d; cv.style.width=W+'px'; cv.style.height=H+'px'; cv.className='illus';
@@ -3783,7 +3819,8 @@ function penArt(kind){
   const rock=(x,y)=>({x,y,t:'R',part:'rock',rot:0,id:'r'+x+'_'+y});
   const arrow=(x1,y1,x2,y2)=>{ c.strokeStyle='rgba(255,255,255,.85)'; c.fillStyle='rgba(255,255,255,.85)'; c.lineWidth=4; c.lineCap='round'; c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
     const a=Math.atan2(y2-y1,x2-x1); c.beginPath(); c.moveTo(x2,y2); c.lineTo(x2-10*Math.cos(a-.5),y2-10*Math.sin(a-.5)); c.lineTo(x2-10*Math.cos(a+.5),y2-10*Math.sin(a+.5)); c.closePath(); c.fill(); };
-  if(T&&kind==='drag'){
+  if(kind==='stars'){ /* drawn below for every size */ }
+  else if(T&&kind==='drag'){
     const s=19, ox=8, oy=40; slots(s,ox,oy,8,6);
     drawCells(c,[...put('I',0,0,4,'a'),...put('O',0,5,4,'b')],s,ox,oy);
     c.fillStyle='rgba(8,3,28,.45)'; rr(c,168,40,104,126,16); c.fill();
@@ -3842,16 +3879,21 @@ function penArt(kind){
     [[5,1],[5,2],[6,2],[6,1]].forEach(([x,y])=>{ rr(c,ox+x*s+3,oy+y*s+3,s-6,s-6,6); c.fill(); c.stroke(); }); c.restore();
     label('Hint shows where the next critter goes',W/2,H-10,12.5);
   }
+  if(kind==='stars'){
+    const rows=[[1,'Easy'],[3,'Tricky'],[5,'Expert']], gap=T?56:36, y0=T?40:24, fs=T?22:15;
+    rows.forEach(([d,txt],j)=>{ const y=y0+j*gap; c.font=`${fs}px system-ui, sans-serif`; c.textAlign='left'; c.textBaseline='middle'; c.fillText('🐾'.repeat(d),20,y); label(txt,W-60,y,T?18:14,'#fff'); });
+  }
   return cv;
 }
 const PEN_TOUR=[
   {art:'drag', title:'Drag critters in', text:'Pick any of the three critters in the tray and drop it anywhere it fits. Critters can\'t be turned, so look for a good spot.'},
   {art:'line', title:'Fill a row or a column', text:'A full row or column clears, and every critter in it goes home. Clear several lines at once for bigger points.'},
-  {art:'combo', title:'Keep it going', text:'Clear lines move after move to build a combo. When none of your three critters fit anywhere, the pen is full and the game ends.'}];
+  {art:'combo', title:'Keep it going', text:'Clear lines move after move to build a combo. Three in a row starts Fever, and the board glows until a move clears nothing. When none of your three critters fit anywhere, the pen is full and the game ends.'}];
 const PZ_TOUR=[
   {art:'rocks', title:'Break every rock', text:'Grey rocks only break when the row or column they sit in is filled. Break them all to solve the puzzle.'},
   {art:'drag', title:'Use what you\'re given', text:'Each puzzle gives you a set of critters, three at a time. They can\'t be turned, so the order matters. The ones still to come show under the tray.'},
-  {art:'hint', title:'Stuck?', text:'Tap Hint to see where the next critter goes, or Restart to try again. Solving a puzzle gives its life back.'}];
+  {art:'hint', title:'Stuck?', text:'Tap Hint to see where the next critter goes, or Restart to try again. Solving a puzzle gives its life back.'},
+  {art:'stars', title:'Rated in paws', text:'Every puzzle is rated from 1 paw (Easy) to 5 paws (Expert), and they get harder fast. Solve one without a hint to earn a yellow ✓.'}];
 function showTour(tour,i,opts){
   const st=tour[i], last=i===tour.length-1;
   const wrap=document.createElement('div'); wrap.className='tut';
@@ -3865,7 +3907,12 @@ function showTour(tour,i,opts){
 }
 function showRules(){
   if(view!=='pen') return; if(drag){ drag=null; board.classList.remove('dragging'); }
-  if(mode==='levels') showTour(PZ_TOUR,0,{name:'Puzzle rules'}); else showTour(PEN_TOUR,0,{name:'Critter pen rules'});
+  if(mode==='levels') showTour(PZ_TOUR,0,{name:'How to play · Puzzles'}); else showTour(PEN_TOUR,0,{name:'How to play · Critter Pen'});
+}
+// after the welcome tutorial: back to the menu with the Petting Zoo button glowing and a "Start here" tag
+function highlightStart(){
+  const b=[...document.querySelectorAll('#ovActions button')].find(x=>x.textContent==='Petting Zoo'); if(!b) return;
+  b.classList.add('starthere'); b.setAttribute('data-tag','Start here');
 }
 function showTutorial(i,opts={}){
   const st=TUT[i], last=i===TUT.length-1;
@@ -3875,11 +3922,11 @@ function showTutorial(i,opts={}){
   wrap.append(st.modes?modesList():illus(st.art),dots);
   const finish=(play)=>{ PR.onboarded=Date.now(); saveP();
     if(opts.fromSettings && running && !over){ hideOverlay(); if(view==='tank'){ paused=false; $('pauseBtn').textContent='Pause'; } return; }
-    if(play) newGame('classic'); else showStart(); };
+    showStart(); if(play) setTimeout(highlightStart,60); };
   const btns=[];
   if(i>0) btns.push({label:'Back',cls:'big small ghost',fn:()=>showTutorial(i-1,opts)});
-  btns.push(last ? {label: opts.fromSettings?'Got it':'Let\'s play!',cls:'big small',fn:()=>finish(!opts.fromSettings)} : {label:'Next',cls:'big small',fn:()=>showTutorial(i+1,opts)});
-  showOverlay({eyebrow: opts.first&&i===0 ? `Nice to meet you, ${getName()}!` : `How to play · ${i+1} of ${TUT.length}`, title:st.title,
+  btns.push(last ? {label: opts.fromSettings?'Got it':'Let\'s go!',cls:'big small',fn:()=>finish(!opts.fromSettings)} : {label:'Next',cls:'big small',fn:()=>showTutorial(i+1,opts)});
+  showOverlay({eyebrow: opts.first&&i===0 ? (getName()!=='Player'?`Nice to meet you, ${getName()}!`:'Welcome to Critter Stack') : `How to play · ${i+1} of ${TUT.length}`, title:st.title,
     text: typeof st.text==='function'?st.text():st.text, extra:wrap, noRemember:true, buttons:btns,
     minor: last?[]:[{label:'Skip tutorial',cls:'big ghost skip',fn:()=>finish(false)}]});
 }
@@ -3900,7 +3947,7 @@ function seed(){
 
 if(document.documentElement.classList.contains('phone')){ $('viewBtn').textContent='Full view'; $('viewBtn').setAttribute('aria-pressed','true'); }
 seed(); layout(); buildZoo();
-if(!PR.onboarded && !(PR.games>0)) showNamePrompt(); else showStart();
+if(!PR.onboarded && !(PR.games>0)) showTutorial(0,{first:true}); else showStart();
 requestAnimationFrame(frame);
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ drawSide(); buildZoo(); });
 })();

@@ -18,7 +18,12 @@ final class GameCenterService: NSObject, GKGameCenterControllerDelegate {
         GKLocalPlayer.local.authenticateHandler = { [weak self] vc, _ in
             guard let self else { return }
             if let vc { self.bridge.rootViewController?.present(vc, animated: true) }
-            if GKLocalPlayer.local.isAuthenticated { self.flushPending() }   // send anything saved while offline
+            if GKLocalPlayer.local.isAuthenticated {
+                self.bridge.call("critterPlayer", ["alias": GKLocalPlayer.local.alias])   // the name leaderboards show
+                self.flushPending()   // send anything saved while offline
+            } else if vc == nil {
+                self.bridge.call("critterPlayer", ["alias": ""])   // signed out: the game asks for its own name
+            }
         }
     }
 

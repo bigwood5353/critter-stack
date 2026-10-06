@@ -17,7 +17,7 @@ This folder is the native iOS app that wraps the game. The game page (`CritterSt
 | `CritterStack/StoreService.swift` | StoreKit 2 purchases, prices in the player's own currency, purchases completed outside the app, and Restore Purchases. |
 | `CritterStack/Services.swift` | Haptics, daily reminders, widget data and **iCloud backup**. |
 | `CritterStack/AdsService.swift` | Google AdMob: interstitials between games and rewarded ads, with the consent form and tracking prompt. No ads (and no free rewards) until the SDK is added. |
-| `CritterWidget/CritterWidget.swift` | Home-screen widget (small and medium): Daily stack number, tries left, rank, streak, crest and medal. |
+| `CritterWidget/CritterWidget.swift` | Home-screen widget (small and medium): Daily Stack number, tries left, rank, streak, crest and medal. |
 | `prepare-web.sh` | Copies the game into the app, switches off dev tools and uses the bundled font. |
 | `game-center-achievements.csv` | All 32 achievements, with IDs, titles, descriptions and points (totalling 1,000). |
 
@@ -81,7 +81,7 @@ Each one needs a display name, a description and a review screenshot (a screensh
 
 **Achievements:** enter the 32 rows from `game-center-achievements.csv`. Each also needs a 512×512 image; the sticker emoji on a colored circle is fine.
 
-> **Reset time:** the game already runs the Daily stack and every board on **universal time (UTC)**. A new stack opens at 00:00 UTC, which is 8 PM US Eastern in summer and 7 PM in winter, and weekly boards turn over Monday 00:00 UTC. The start times in App Store Connect must match exactly, or the podiums won't line up with what players see. App Store Connect asks for the start in your own time zone, so enter the local time that equals 00:00 UTC.
+> **Reset time:** the game already runs the Daily Stack and every board on **universal time (UTC)**. A new stack opens at 00:00 UTC, which is 8 PM US Eastern in summer and 7 PM in winter, and weekly boards turn over Monday 00:00 UTC. The start times in App Store Connect must match exactly, or the podiums won't line up with what players see. App Store Connect asks for the start in your own time zone, so enter the local time that equals 00:00 UTC.
 
 ## 4. Ads (Google AdMob)
 
@@ -115,11 +115,11 @@ The ad code is written: `CritterStack/AdsService.swift`. It shows an interstitia
 - [ ] **StoreKit testing in Xcode:** File › New › File › **StoreKit Configuration File**, synced from App Store Connect, then selected in the scheme (Run › Options). Buy each product; kill and relaunch; delete and reinstall, then **Restore purchases**.
 - [ ] Sandbox purchases on a real device with a Sandbox Apple ID (Settings › App Store › Sandbox Account).
 - [ ] Game Center sign-in, score appears on the board, **View in Game Center**, and an achievement banner appears.
-- [ ] **Airplane mode:** fresh install, then play the Petting Zoo, the Daily stack and the pen. Fonts must look right, with no errors or blank screens.
+- [ ] **Airplane mode:** fresh install, then play the Petting Zoo, the Daily Stack and the pen. Fonts must look right, with no errors or blank screens.
 - [ ] **Silent switch on:** no game sounds. With Music playing, game sounds mix in without stopping the music.
 - [ ] **Interruptions:** during a game, take a call, trigger Siri and swipe to the home screen. The game should pause each time.
 - [ ] **Widget:** add it to the home screen, play a Daily try, and check the widget updates. After midnight it says "New stack is ready!" Tapping it opens the Daily rankings.
-- [ ] **Reminder:** finish a Daily stack, tap **Remind me**, and allow notifications. Check that tomorrow's reminder arrives and that none arrives once you've already played that day.
+- [ ] **Reminder:** finish a Daily Stack, tap **Remind me**, and allow notifications. Check that tomorrow's reminder arrives and that none arrives once you've already played that day.
 - [ ] **iPad:** portrait, both landscapes, and Split View at half and one-third width.
 - [ ] No bounce, zoom or text-selection menus anywhere except the name boxes.
 - [ ] Settings no longer shows the Developer tools (`prepare-web.sh` switched them off).
@@ -132,7 +132,7 @@ The ad code is written: `CritterStack/AdsService.swift`. It shows an interstitia
 > Critter Stack is a puzzle game for iPhone and iPad. Native integrations:
 > • Game Center: sign-in, all-time and recurring (daily and weekly) leaderboards, and 32 achievements
 > • StoreKit 2 in-app purchases (consumable skip, undo and life packs; No Ads, Zoo and Bundle unlocks), with Restore Purchases in the Store screen and in Settings
-> • A WidgetKit home-screen widget showing today's Daily stack, tries left, streak and rank
+> • A WidgetKit home-screen widget showing today's Daily Stack, tries left, streak and rank
 > • Opt-in local notifications for the daily puzzle (requested only after the player chooses "Remind me")
 > • Taptic Engine haptics, and an ambient audio session that respects the silent switch and pauses for calls
 > The game is fully playable offline, and no account is required.
@@ -143,6 +143,6 @@ Keep the notes **accurate**. Describe what the app does, and don't claim it's bu
 ## Known limits to plan for
 
 - **iCloud backup keeps one snapshot per Apple ID** (the most recent device to save). When two devices disagree, the player picks one; progress is not merged. Purchases never depend on the backup, since Restore Purchases brings them back from the App Store.
-- The backup covers progress, scores, settings, your name, and the last week of Daily stack bests. Players who aren't signed in to iCloud, or who switch iCloud off for Critter Stack in Settings, simply keep progress on the device.
+- The backup covers progress, scores, settings, your name, and the last week of Daily Stack bests. Players who aren't signed in to iCloud, or who switch iCloud off for Critter Stack in Settings, simply keep progress on the device.
 - **Game Center keeps only the most recent finished period.** The game asks for the final rank as soon as a board ends. If a player skips opening the app for over a day (or over a week for weekly boards), that period's prize can't be verified and is skipped.
 - **Web view storage:** keep `websiteDataStore = .default()` (already set). Don't switch to a non-persistent store, or progress resets on every launch.
