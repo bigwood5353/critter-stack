@@ -201,6 +201,12 @@
   .zrow b{ font-size:15px; display:block; }
   .zrow small{ display:block; font-size:12px; color: var(--ink-soft); }
   .looks{ grid-column: 1 / -1; display:flex; flex-wrap:wrap; gap:5px; }
+  .spstrip{ grid-column: 1 / -1; display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; }
+  .spthumb{ display:grid; justify-items:center; gap:1px; padding:4px 2px 3px; border:2px solid var(--line); border-radius:12px; background:var(--panel); cursor:pointer; font-family:var(--font); color:var(--ink); min-width:0; }
+  .spthumb small{ font-size:10.5px !important; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; color:var(--ink) !important; }
+  .spthumb.on{ border-color:#2BB673; box-shadow:0 0 0 2px #2BB673; }
+  .spthumb.locked canvas{ opacity:.8; filter:saturate(.6); } .spthumb.locked small{ color:var(--ink-soft) !important; }
+  .picks.one{ grid-template-columns:1fr !important; }
   .picks{ grid-column: 1 / -1; display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
   .pick{ display:grid; gap:2px; font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color: var(--ink-soft); }
   .pick select{ font-family: var(--font); font-size:15px; font-weight:600; color: var(--ink); background: var(--panel); border:2.5px solid var(--line); border-radius:12px; padding:7px 8px; width:100%; min-width:0; text-transform:none; letter-spacing:0; }
@@ -1025,7 +1031,8 @@ function feature(c,t,part,s,pal){
 }
 FEAT.R={ rock(c,u,a,s){ c.fillStyle=hexA(a.dark,.55); circle(c,-u*.3,u*.2,u*.12); circle(c,u*.25,-u*.1,u*.09); circle(c,u*.35,u*.4,u*.07);
   c.strokeStyle=hexA(a.dark,.7); c.lineWidth=s*.035; line(c,[-u*.5,-u*.35,-u*.2,-u*.15,-u*.25,u*.05]); } };
-function lookOf(t){ const l=(typeof PR!=='undefined'&&PR.looks[t])||'plain'; return (LOOKS[l]&&unlockN(t)>=LOOKS[l].need)?l:'plain'; }
+let ZPREV=null;   // {t, sp, look} while the Zoo paints a preview
+function lookOf(t){ if(ZPREV&&ZPREV.t===t&&ZPREV.look) return ZPREV.look; const l=(typeof PR!=='undefined'&&PR.looks[t])||'plain'; return (LOOKS[l]&&unlockN(t)>=LOOKS[l].need)?l:'plain'; }
 /* ---------- more animals: each shape can wear one of four species ---------- */
 function mixHex(h,t,k){ const a=parseInt(h.slice(1),16), b=parseInt(t.slice(1),16);
   const ch=s=>Math.round(((a>>s)&255)*(1-k)+((b>>s)&255)*k); return '#'+((1<<24)+(ch(16)<<16)+(ch(8)<<8)+ch(0)).toString(16).slice(1); }
@@ -1180,7 +1187,7 @@ const SPECIES={
 TYPES.forEach(t=>{ SPECIES[t]={shape:t, name:A[t].name, pose:A[t].pose, need:0, pal:A[t], feat:FEAT[t]}; });
 const SPECIES_OF={}; TYPES.forEach(t=>SPECIES_OF[t]=[t, t+'2', t+'3', t+'4']);
 function unlockN(t){ return (PR.owned&&PR.owned.zoo) ? 1e9 : (PR.home[t]||0); }
-function spOf(t){ const p=(typeof PR!=='undefined'&&PR.species)||{}; const id=p[t]; return (id&&SPECIES[id]&&unlockN(t)>=SPECIES[id].need)?id:t; }
+function spOf(t){ if(ZPREV&&ZPREV.t===t&&ZPREV.sp) return ZPREV.sp; const p=(typeof PR!=='undefined'&&PR.species)||{}; const id=p[t]; return (id&&SPECIES[id]&&unlockN(t)>=SPECIES[id].need)?id:t; }
 function nameOf(t){ return (SPECIES[spOf(t)]||A[t]).name; }
 function poseOf(t){ return (SPECIES[spOf(t)]||A[t]).pose; }
 
@@ -1377,6 +1384,20 @@ function layout(){
   const zp=document.querySelector('.panel.zoo'); if(zp){ if(tabLand){ zp.style.maxHeight=Math.max(120,Math.round(viewH()-zp.getBoundingClientRect().top-118))+'px'; } else zp.style.maxHeight=''; }
   drawSide();
 }
+// the big menu logo must stay on exactly two lines; if the font is wider than expected (or the frame narrower), shrink it until it does
+function fitBigLogo(){
+  const big=document.querySelector('.overlay .mark.biglogo'); if(!big||!big.offsetParent) return;
+  big.style.fontSize='';
+  for(let n=0;n<20;n++){
+    drawLogo();
+    const F=parseFloat(getComputedStyle(big).fontSize), rows=new Set();
+    big.querySelectorAll('span:not(.crit):not(.br)').forEach(sp=>{ if(sp.textContent.trim()) rows.add(Math.round(sp.getBoundingClientRect().top/(F*.5))); });
+    if(rows.size<=2||F<30) break;
+    big.style.fontSize=Math.floor(F*.94)+'px';
+  }
+}
+addEventListener('resize',()=>requestAnimationFrame(fitBigLogo));
+try{ document.fonts&&document.fonts.ready.then(()=>requestAnimationFrame(fitBigLogo)); }catch(e){}
 function drawLogo(){
   document.querySelectorAll('.mark').forEach(h1=>{ if(!h1.offsetParent) return;
   const F=parseFloat(getComputedStyle(h1).fontSize)||36, d=Math.min(window.devicePixelRatio||1,3);
@@ -2102,23 +2123,36 @@ function showZoo(){
   TYPES.forEach(t=>{
     const r=document.createElement('div'); r.className='zrow';
     const cv=document.createElement('canvas'), d=Math.min(window.devicePixelRatio||1,2.5); cv.width=140*d; cv.height=80*d; cv.style.width='140px'; cv.style.height='80px';
-    const ctx=cv.getContext('2d'); const paint=()=>{ ctx.setTransform(d,0,0,d,0,0); ctx.clearRect(0,0,140,80); drawPieceIn(ctx,t,t==='I'?31:32,70,44); };
+    const ctx=cv.getContext('2d'); let prev=null;
+    const paint=()=>{ ctx.setTransform(d,0,0,d,0,0); ctx.clearRect(0,0,140,80); ZPREV=prev; try{ drawPieceIn(ctx,t,t==='I'?31:32,70,44); }finally{ ZPREV=null; }
+      if(prev){ ctx.font='700 11px Fredoka, system-ui, sans-serif'; ctx.textAlign='left'; ctx.textBaseline='top'; const tw=ctx.measureText('👀 Preview').width; ctx.fillStyle='rgba(43,27,78,.8)'; rr(ctx,2,2,tw+12,17,8); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText('👀 Preview',8,4); } };
     const tx=document.createElement('div'); const b=document.createElement('b'); b.textContent=nameOf(t); const sm=document.createElement('small');
     sm.textContent=`${PR.home[t]||0} sent home · ${PR.whole[t]||0} whole`; tx.append(b,sm);
-    const n=PR.home[t]||0, un=unlockN(t), pick=document.createElement('div'); pick.className='picks';
+    const n=PR.home[t]||0, un=unlockN(t), pick=document.createElement('div'); pick.className='picks one';
     const mkSel=(label,id,opts,cur,onPick)=>{ const w=document.createElement('label'); w.className='pick'; w.htmlFor=id; const sp=document.createElement('span'); sp.textContent=label;
       const sel=document.createElement('select'); sel.id=id;
-      opts.forEach(o=>{ const op=document.createElement('option'); op.value=o.v; op.textContent=o.ok?o.name:`🔒 ${o.name} · ${n}/${o.need}`; op.disabled=!o.ok; if(o.v===cur) op.selected=true; sel.append(op); });
-      sel.addEventListener('change',()=>onPick(sel.value)); w.append(sp,sel); return w; };
-    const refresh=()=>{ b.textContent=nameOf(t); paint(); buildZoo(); drawSide(); };
+      opts.forEach(o=>{ const op=document.createElement('option'); op.value=o.v; op.textContent=o.ok?o.name:`🔒 ${o.name} · ${n}/${o.need}`; if(o.v===cur) op.selected=true; sel.append(op); });
+      sel.addEventListener('change',()=>{ const o=opts.find(x=>x.v===sel.value); if(o&&!o.ok){ showPrev(label==='Animal'?{sp:o.v}:{look:o.v}, o.name, o.need); sel.value=cur; return; } prev=null; onPick(sel.value); });
+      w.append(sp,sel); return w; };
+    const showPrev=(pv,name,need)=>{ prev={t,...pv}; paint(); b.textContent=`${name} · preview`; sm.textContent=`Unlocks at ${need} sent home. You have ${n}.`;
+      clearTimeout(r._pt); r._pt=setTimeout(()=>{ prev=null; paint(); b.textContent=nameOf(t); sm.textContent=sumText; },3500); };
+    const refresh=()=>{ b.textContent=nameOf(t); sm.textContent=sumText; paint(); buildZoo(); drawSide(); strip.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.sp===spOf(t))); };
+    // the four animals for this shape: tap an unlocked one to wear it, a locked one to preview it
+    const strip=document.createElement('div'); strip.className='spstrip';
+    SPECIES_OF[t].forEach(id=>{ const S=SPECIES[id]||A[t], need=S.need||0, ok=un>=need, bt=document.createElement('button'); bt.type='button'; bt.dataset.sp=id;
+      bt.className='spthumb'+(ok?'':' locked')+(id===spOf(t)?' on':''); bt.setAttribute('aria-label',ok?S.name:`${S.name}, locked, unlocks at ${need} sent home`);
+      const c2=document.createElement('canvas'); c2.width=64*d; c2.height=40*d; c2.style.width='64px'; c2.style.height='40px'; const x2=c2.getContext('2d'); x2.setTransform(d,0,0,d,0,0);
+      ZPREV={t,sp:id,look:'plain'}; try{ drawPieceIn(x2,t,t==='I'?14:15,32,22); }finally{ ZPREV=null; }
+      const lb=document.createElement('small'); lb.textContent= ok?S.name:`🔒 ${need}`; bt.append(c2,lb);
+      bt.addEventListener('click',()=>{ if(ok){ prev=null; PR.species=PR.species||{}; PR.species[t]=id; saveP(); refresh(); } else showPrev({sp:id},S.name,need); });
+      strip.append(bt); });
     pick.append(
-      mkSel('Animal','sp-'+t, SPECIES_OF[t].map(id=>({v:id,name:SPECIES[id].name,need:SPECIES[id].need,ok:un>=SPECIES[id].need})), spOf(t), v=>{ PR.species=PR.species||{}; PR.species[t]=v; saveP(); refresh(); }),
       mkSel('Accessory','lk-'+t, Object.keys(LOOKS).map(k=>({v:k,name:LOOKS[k].name,need:LOOKS[k].need,ok:un>=LOOKS[k].need})), lookOf(t), v=>{ PR.looks[t]=v; saveP(); refresh(); })
     );
     const got=SPECIES_OF[t].filter(id=>un>=SPECIES[id].need).length, nextSp=SPECIES_OF[t].map(id=>SPECIES[id]).find(S=>n<S.need);
     const nextNeed=un>=1e9?Infinity:Math.ceil((n+1)/25)*25, nextItem=[...SPECIES_OF[t].map(id=>SPECIES[id]),...Object.values(LOOKS)].find(x=>x.need===nextNeed);
-    sm.textContent=`${n} sent home · ${got}/4 animals`+(nextItem?` · ${nextItem.name} at ${nextNeed}`:' · all unlocked');
-    paint(); r.append(cv,tx,pick); list.append(r);
+    const sumText=`${n} sent home · ${got}/4 animals`+(nextItem?` · ${nextItem.name} at ${nextNeed}`:' · all unlocked'); sm.textContent=sumText;
+    paint(); r.append(cv,tx,strip,pick); list.append(r);
   });
   // special visitors: rarer critters with their own shapes; they earn accessories on the same ladder
   const sh=document.createElement('h3'); sh.className='store-h'; sh.textContent='Wild critters · babies and jumbos that drop in now and then'; list.append(sh);
@@ -2395,11 +2429,14 @@ function copyShare(){
   try{ navigator.clipboard.writeText(txt).then(()=>toast('Copied. Paste it anywhere'),fallback); }catch(e){ fallback(); }
 }
 /* ---------- ads: shown only between games ----------
-   15 counted games of grace, then an ad every 3 counted games with at least 3 minutes between ads.
+   8 counted games of grace, then an ad every 3 counted games with at least 3 minutes between ads.
    Games under 45 seconds don't count; a puzzle attempt counts as a third of a game.
    In the app a native handler at window.webkit.messageHandlers.ads shows a real interstitial
    and calls window.critterAdDone() when it closes. */
-const AD_GRACE=8, AD_EVERY=3, AD_GAP=180000, AD_MIN_GAME=45000;
+let AD_GRACE=8, AD_EVERY=3, AD_GAP=180000, AD_MIN_GAME=45000;
+// TestFlight builds: the app plays Google's test ads and calls this, so testers see an ad early and often.
+// App Store builds never call it and keep the real schedule above.
+window.critterAdTestMode=on=>{ if(on){ AD_GRACE=1; AD_EVERY=2; AD_GAP=30000; AD_MIN_GAME=10000; } };
 let gameStart=0;
 function adState(){ return PR.ads||(PR.ads={games:0,since:0,last:0,shown:0}); }
 function countGame(){
@@ -2636,7 +2673,7 @@ function showStart(){
       {label:'Rankings',icon:'🏅',sub:(()=>{ const r=currentRank('daily').rank; return r?`#${r.toLocaleString()} today`:triesLeft()<DAILY_TRIES?'Daily board':'Top 3 win'; })(),cls:'big tile hstile',fn:()=>showBoards('daily')}],
     note: (lockC||lockP) ? [lockC?'Score 2,000 in the Petting Zoo to unlock Challenge.':'', lockP?`Send 20 critters home to open the pen (${Math.min(20,sum(PR.home))}/20).`:''].filter(Boolean).join(' ')
       : '' });
-  requestAnimationFrame(drawLogo);
+  requestAnimationFrame(fitBigLogo);
 }
 // Daily goal: a bobbing button by the logo (with a ! until it's done) opens today's goal and your streaks
 const GOAL_BTN=document.getElementById('goalBtn');
@@ -3071,7 +3108,7 @@ function penCheckStuck(){
   penEnding=true; setTimeout(()=>{ if(penEnding) endGame(false); },700);
 }
 function penStuck(){
-  const n=turnsLeft(), back=()=>{ hideOverlay(); popups.push({text:'Tap a critter twice', sub:'to turn it', y:PN-1.5, t:0, size:.5}); };
+  const n=turnsLeft(), back=()=>{ hideOverlay(); if(turnsLeft()>0) popups.push({text:'Tap a critter twice', sub:'to turn it', y:PN-1.5, t:0, size:.5}); else penCheckStuck(); };   // no turn after all: ask again
   const btns=[];
   if(n) btns.push({label:`Use a turn · ${n}`,cls:'big small pen',fn:back});
   else btns.push({label:'Get turns',cls:'big small pen',fn:()=>{ turnResume=back; openStore('turns',true); }});
@@ -3690,7 +3727,7 @@ function openStore(focus, keepResume){
   }
   if(focus==='turns'){ turns(); lives(); upgrades(); skips(); undos(); } else if(focus==='undos'){ undos(); skips(); turns(); lives(); upgrades(); } else if(focus==='skips'){ skips(); undos(); turns(); lives(); upgrades(); } else if(focus==='lives'){ lives(); upgrades(); skips(); undos(); turns(); } else if(view==='pen'){ turns(); lives(); upgrades(); skips(); undos(); } else { lives(); upgrades(); skips(); undos(); turns(); }
   const rs=document.createElement('button'); rs.type='button'; rs.className='restore'; rs.textContent='Restore purchases'; rs.addEventListener('click',restorePurchases); wrap.append(rs);
-  const done=()=>{ if(storeResume&&running&&!over){ paused=false; $('pauseBtn').textContent='Pause'; hideOverlay(); } else if(running&&!over) hideOverlay(); else showStart(); storeResume=false; };
+  const done=()=>{ if(storeResume&&running&&!over){ paused=false; $('pauseBtn').textContent='Pause'; hideOverlay(); } else if(running&&!over){ hideOverlay(); turnResume=null; if(view==='pen') setTimeout(penCheckStuck,250); } else showStart(); storeResume=false; };
   showOverlay({eyebrow: focus==='skips'?'Out of skips':focus==='undos'?'Out of undos':focus==='turns'?'Turns':focus==='lives'?'Lives':'Critter Stack', title:'Store', text:'', extra:wrap, noRemember:true, buttons:[], back:done,
     note: nativeStore()?'':(DEV?'Dev build: purchases are free test grants.':'Purchases are made through the App Store in the Critter Stack app.')});
 }

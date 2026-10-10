@@ -31,12 +31,16 @@ final class AdsService: NSObject {
     private static let myRewardedUnit     = "ca-app-pub-4757265288772810/3311702737"   // Critter Stack · Free life, skip or undo
     private static let testInterstitial  = "ca-app-pub-3940256099942544/4411468910"
     private static let testRewarded      = "ca-app-pub-3940256099942544/1712485313"
+    /// TestFlight installs carry a sandbox receipt; App Store installs don't. TestFlight builds play Google's test ads
+    /// (they always load and are labeled "Test Ad"), so testers can see ads before launch without tapping real ones,
+    /// which AdMob can treat as invalid traffic. The App Store build uses the real units with no change needed.
+    static let isTestFlight: Bool = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
     #if DEBUG
     private let interstitialUnit = AdsService.testInterstitial
     private let rewardedUnit     = AdsService.testRewarded
     #else
-    private let interstitialUnit = AdsService.myInterstitialUnit.contains("XXXX") ? AdsService.testInterstitial : AdsService.myInterstitialUnit
-    private let rewardedUnit     = AdsService.myRewardedUnit.contains("XXXX") ? AdsService.testRewarded : AdsService.myRewardedUnit
+    private let interstitialUnit = (AdsService.isTestFlight || AdsService.myInterstitialUnit.contains("XXXX")) ? AdsService.testInterstitial : AdsService.myInterstitialUnit
+    private let rewardedUnit     = (AdsService.isTestFlight || AdsService.myRewardedUnit.contains("XXXX")) ? AdsService.testRewarded : AdsService.myRewardedUnit
     #endif
 
     private var started = false
@@ -54,6 +58,11 @@ final class AdsService: NSObject {
     func start() {
         guard !started else { return }
         started = true
+        #if DEBUG
+        bridge.call("critterAdTestMode", true)
+        #else
+        if AdsService.isTestFlight { bridge.call("critterAdTestMode", true) }   // testers see an ad early and often
+        #endif
         gatherConsent { [weak self] in
             guard let self else { return }
             self.requestTracking {
