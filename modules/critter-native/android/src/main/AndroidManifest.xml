@@ -1,0 +1,21 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.VIBRATE" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <uses-permission android:name="com.android.vending.BILLING" />
+
+  <application>
+    <!-- daily Daily Stack reminder, scheduled with AlarmManager by the game -->
+    <receiver android:name="expo.modules.critternative.ReminderReceiver" android:exported="false" />
+    <!-- "Share my rank": hands the rank picture to other apps -->
+    <provider
+      android:name="androidx.core.content.FileProvider"
+      android:authorities="${applicationId}.critter.share"
+      android:exported="false"
+      android:grantUriPermissions="true">
+      <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/critter_share_paths" />
+    </provider>
+  </application>
+</manifest>

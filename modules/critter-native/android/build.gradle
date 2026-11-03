@@ -1,0 +1,26 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.critternative'
+version = '1.0.0'
+
+android {
+  namespace "expo.modules.critternative"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
+}
+
+dependencies {
+  // Google Play Billing: the same 14 products as the App Store (consumables are consumed, unlocks acknowledged)
+  implementation "com.android.billingclient:billing-ktx:8.0.0"
+  // Google AdMob and Google's consent form for EU/UK players
+  implementation "com.google.android.gms:play-services-ads:24.4.0"
+  implementation "com.google.android.ump:user-messaging-platform:3.2.0"
+  // Google Play in-app review prompt
+  implementation "com.google.android.play:review-ktx:2.0.2"
+  implementation "androidx.core:core-ktx:1.13.1"
+}

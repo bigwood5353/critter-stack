@@ -439,7 +439,7 @@
   .goalbtn{ display:none; position:relative; width:48px; height:48px; border-radius:50%; border:0; font-size:24px; line-height:1; cursor:pointer;
     background:#C98A12; box-shadow:0 4px 0 color-mix(in srgb,#C98A12 62%,#20124D); animation: goalBob 2.2s ease-in-out infinite; }
   .goalbtn .dot{ position:absolute; top:-6px; right:-6px; min-width:22px; height:22px; border-radius:11px; background:#E0245E; color:#fff; font:700 14px/22px var(--font); box-shadow:0 0 0 2px #fff; }
-  .goalbtn.done{ animation:none; } .goalbtn.done .dot{ background:#16936A; }
+  .goalbtn.done{ animation:none; } .goalbtn.done .dot{ display:none; }
   html.atmenu .goalbtn{ display:block; position:absolute; left:4px; top:50%; margin-top:-26px; }
   @keyframes goalBob{ 0%,100%{ transform:translateY(0) rotate(-4deg); } 50%{ transform:translateY(-5px) rotate(4deg); } }
   @media (prefers-reduced-motion: reduce){ .goalbtn{ animation:none; } }
@@ -1582,7 +1582,7 @@ function loadP(){ let p={}; try{ p=JSON.parse(localStorage.getItem('critterProgr
   return Object.assign(JSON.parse(JSON.stringify(PDEF)),p); }
 let PR=loadP();
 function saveP(){ try{ localStorage.setItem('critterProgress',JSON.stringify(PR)); }catch(e){} if(typeof cloudSave==='function') cloudSave(); }
-function newG(m){ return {mode:m, pen:m==='puzzle'||m==='levels', score:0, rows:0, maxClear:0, stampedes:0, home:{}, whole:{}, buddies:0, gold:0, usedHold:false, secs:0, level:1, maxCombo:0, penCross:false, dailyComplete:false, levelSolved:false}; }
+function newG(m){ return {run:Math.random().toString(36).slice(2,12), mode:m, pen:m==='puzzle'||m==='levels', score:0, rows:0, maxClear:0, stampedes:0, home:{}, whole:{}, buddies:0, gold:0, usedHold:false, secs:0, level:1, maxCombo:0, penCross:false, dailyComplete:false, levelSolved:false}; }
 let G=newG('classic');
 function trackHome(t,whole,gold){
   PR.home[t]=(PR.home[t]||0)+1; G.home[t]=(G.home[t]||0)+1;
@@ -1746,7 +1746,60 @@ function standings(key,at){
 }
 // Game Center data, when the native shell provides it
 const NATIVE_LB={};
-function nativeGC(){ return bridge('gameCenter'); }
+function nativeGC(){ return bridge('gameCenter')||cloudBoard(); }
+/* ---------- shared Critter Stack board ----------
+   One worldwide board per mode and period at scores.woodinteractive.app, shared by every platform. The Android app
+   uses it now (the app lists 'board' in window.__critterNative); iPhone keeps Game Center until it switches over.
+   It answers the same messages as the iOS Game Center bridge, so the Rankings screen works the same either way.
+   Scores wait in a queue while the phone is offline and are sent when it's back. */
+const PLATFORM=window.__critterPlatform||'web', ANDROID_APP=PLATFORM==='android';
+const BOARD_API='https://scores.woodinteractive.app/v1';
+const BOARD_OF=gc=>Object.keys(LB).find(k=>LB[k].gc===gc);
+function cloudBoard(){ return (window.__critterNative||[]).includes('board') ? BOARD_CLIENT : null; }
+function boardSecret(){ let s=lsGet('critterBoardSecret');
+  if(!s||!/^[a-f0-9]{32}$/.test(s)){ const a=new Uint8Array(16); crypto.getRandomValues(a); s=[...a].map(x=>x.toString(16).padStart(2,'0')).join(''); lsSet('critterBoardSecret',s); }
+  return s; }
+const boardIdentity=()=>({device:deviceId(), secret:boardSecret(), name:getName(), platform:PLATFORM});
+const boardQueue={ load(){ try{ return JSON.parse(lsGet('critterBoardQueue')||'[]'); }catch(e){ return []; } },
+  save(q){ lsSet('critterBoardQueue', q.length?JSON.stringify(q.slice(-40)):null); } };
+async function boardFetch(path,opts){ const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),8000);
+  try{ return await fetch(BOARD_API+path,Object.assign({signal:ctl.signal, cache:'no-store'},opts||{})); } finally{ clearTimeout(t); } }
+const boardPost=(path,body)=>boardFetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+let boardFlushing=false;
+async function boardFlush(){
+  if(boardFlushing) return; boardFlushing=true;
+  try{
+    if(lsGet('critterBoardName')!==getName()){ const r=await boardPost('/name',boardIdentity()); if(r.ok) lsSet('critterBoardName',getName()); }
+    let q=boardQueue.load();
+    while(q.length){
+      const item=q[0], r=await boardPost('/score',Object.assign(boardIdentity(),item));
+      if(r.status>=500||r.status===429) break;            // try again later
+      q=boardQueue.load(); q.shift(); boardQueue.save(q);  // sent, or refused for good (board closed, no tries left)
+      if(r.ok) boardLoad(item.board);
+    }
+  }catch(e){}                                              // offline: the queue waits for the next try
+  finally{ boardFlushing=false; }
+}
+async function boardLoad(b){
+  const key=periodKey(b), period=key.split(':')[1];
+  try{ const r=await boardFetch(`/board?board=${b}&period=${period}&device=${deviceId()}`); if(!r.ok) throw 0;
+    const d=await r.json(); window.critterBoardLoaded({leaderboardID:LB[b].gc, total:d.total||0, entries:d.entries||[], player:d.player||null}); }
+  catch(e){ const had=NATIVE_LB[b]; if(!(had&&had.key===key&&!had.error)) window.critterBoardLoaded({leaderboardID:LB[b].gc, error:'offline', entries:[]}); }
+}
+async function boardFinal(key){
+  const [b,period]=key.split(':');
+  try{ const r=await boardFetch(`/rank?board=${b}&period=${period}&device=${deviceId()}`); if(!r.ok) return;
+    const d=await r.json(); window.critterFinalRank({key, rank:d.rank||0, total:d.total||0}); }catch(e){}
+}
+const BOARD_CLIENT={ postMessage(m){
+  const b=BOARD_OF(m.leaderboardID);
+  if(m.type==='submitScore'&&b){ const q=boardQueue.load();
+    q.push({board:b, period:(m.key||periodKey(b)).split(':')[1], score:m.score, context:m.context||0, run:m.run||Math.random().toString(36).slice(2,12)});
+    boardQueue.save(q); boardFlush(); }
+  else if(m.type==='loadBoard'&&b){ boardFlush(); boardLoad(b); }
+  else if(m.type==='loadFinalRank'&&m.key) boardFinal(m.key);
+} };
+setTimeout(()=>{ if(cloudBoard()) boardFlush(); },3000);   // send anything saved while offline
 // sample rivals only ever appear in the dev build outside the app; a release build shows real Game Center data or nothing
 function sampleBoards(){ return DEV && !nativeGC(); }
 // Game Center score context carries flair: crest critter + medal counts, so other players' badges show on your screen
@@ -1787,7 +1840,7 @@ function recordRun(m,sc){
   if(!LB[m]||!(sc>0)) return null;
   PR.lb=PR.lb||{}; const key=(G&&G.mode===m&&G.lbKey)||periodKey(m), before=PR.lb[key]||0;
   if(sc>before) PR.lb[key]=sc;
-  const h=nativeGC(); if(h){ try{ h.postMessage({type:'submitScore', leaderboardID:LB[m].gc, score:sc, context:flairContext()}); }catch(e){} requestBoard(m); }
+  const h=nativeGC(); if(h){ try{ h.postMessage({type:'submitScore', leaderboardID:LB[m].gc, score:sc, context:flairContext(), key, run:G&&G.run}); }catch(e){} requestBoard(m); }
   const st=currentRank(m); saveP();
   return {rank:st.rank,total:st.total,best:PR.lb[key],improved:sc>before};
 }
@@ -1869,6 +1922,7 @@ function showBoards(b0,opts){
     if(!rows.length){ const li=document.createElement('li'); li.className='empty';
       li.textContent = sampleBoards() ? 'Nobody has played yet. Be the first!'
         : nat&&nat.error==='signedOut' ? 'Sign in to Game Center (iPhone Settings › Game Center) to see rankings and compete for prizes.'
+        : nat&&nat.error==='offline' ? "Rankings need an internet connection. Your scores are saved and will be sent when you're back online."
         : nat ? 'Nobody has played yet. Be the first!'
         : nativeGC() ? 'Loading rankings…' : 'Live rankings are in the Critter Stack app, through Game Center.';
       ol.append(li); }
@@ -1884,7 +1938,7 @@ function showBoards(b0,opts){
   if(DEV&&!nativeGC()){ const d=document.createElement('p'); d.className='lbdev'; d.textContent='Test build: these rivals are sample players. The iPhone app shows real Game Center rankings.'; wrap.append(d); }
   const b=LB[b0]?b0:'daily';
   const minor=[{label:'📸 Share my rank',cls:'big ghost',fn:()=>shareRank(lbShowing)},{label:'My top 10',cls:'big ghost',fn:()=>showScores(lbShowing==='daily'?'daily':lbShowing)}];
-  if(nativeGC()||DEV) minor.push({label:'Game Center',cls:'big ghost gcbtn',fn:()=>{ const h=nativeGC(); if(h) try{ h.postMessage({type:'showLeaderboard',leaderboardID:LB[lbShowing].gc}); }catch(e){} else toast('Opens Game Center in the iPhone app'); }});
+  if(bridge('gameCenter')||(DEV&&!cloudBoard())) minor.push({label:'Game Center',cls:'big ghost gcbtn',fn:()=>{ const h=nativeGC(); if(h) try{ h.postMessage({type:'showLeaderboard',leaderboardID:LB[lbShowing].gc}); }catch(e){} else toast('Opens Game Center in the iPhone app'); }});
   showOverlay({eyebrow:'Leaderboards', title:'Rankings', text:'', extra:wrap, noRemember:false,
     buttons:[{label:'Play',cls:'big small alt',fn:()=>newGame(LB[lbShowing].mode)}], minor,
     back:()=>{ lbShowing=null; back?showOverlay(back):showStart(); }});
@@ -2004,8 +2058,14 @@ function scheduleReminders(){
   }
   post('notify',{type:'schedule', items:out});
 }
-window.critterNotifyResult=granted=>{ const st=remindState(); st.on=!!granted; saveP(); scheduleReminders();
-  toast(granted?`Reminder set for ${fmtHour(st.hour)} each day`:'No problem. You can turn reminders on in Settings.'); };
+window.critterNotifyResult=(granted,why)=>{ const st=remindState(); st.on=!!granted; saveP(); scheduleReminders();
+  if(granted){ toast(`Reminder set for ${fmtHour(st.hour)} each day`); return; }
+  if(why==='denied'){   // the phone blocks Critter Stack's notifications: only the phone's Settings can turn them back on
+    const back=lastOv;
+    showOverlay({eyebrow:'Daily reminder', title:'Notifications are off', text:`Your ${PLATFORM==='android'?'phone':'iPhone'} is blocking notifications from Critter Stack. Turn on Allow Notifications in Settings, then come back and switch the reminder on.`, noRemember:true,
+      buttons:[{label:'Open Settings',cls:'big small alt',fn:()=>{ openPhoneSettings(); back?showOverlay(back):hideOverlay(); }},{label:'Not now',cls:'big small ghost',fn:()=>{ back?showOverlay(back):hideOverlay(); }}]});
+    return; }
+  toast('No problem. You can turn reminders on in Settings.'); };
 const fmtHour=h=>new Date(2000,0,1,h).toLocaleTimeString(undefined,{hour:'numeric'});
 function askReminder(){
   const st=remindState(); if(!bridge('notify')&&!DEV) return null;
@@ -2050,7 +2110,7 @@ function applyCloud(snap){
   try{ Object.keys(localStorage).filter(k=>CLOUD_KEYS.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(e){}
   Object.keys(snap.data||{}).forEach(k=>{ if(CLOUD_KEYS.test(k)) lsSet(k,snap.data[k]); });
   lsSet('critterCloudSeen',String(snap.at)); lsSet('critterCloudRestored','1');
-  location.reload();
+  if(!post('app',{type:'reload'})) location.reload();   // the app reloads the bundled page; location.reload() would try the internet
 }
 let cloudPending=null;
 window.critterCloudBackup=(json,force)=>{
@@ -2093,7 +2153,7 @@ function maybeAskReview(why){
 function quietAudio(){ try{ if(AC&&AC.state==='running') AC.suspend(); }catch(e){} }
 window.critterAppState=state=>{
   if(state==='background'||state==='inactive'||state==='interrupted'){ if(live()) togglePause(); quietAudio(); if(state==='background') cloudSave(true); }
-  if(state==='active'){ settleBoards(); scheduleReminders(); pushWidget(); if(!over&&!running&&!overlay.hidden&&$('ovEyebrow').classList.contains('welcome')) showStart(); }
+  if(state==='active'){ settleBoards(); scheduleReminders(); pushWidget(); if(cloudBoard()) boardFlush(); if(!over&&!running&&!overlay.hidden&&$('ovEyebrow').classList.contains('welcome')) showStart(); }
 };
 document.addEventListener('visibilitychange',()=>{ if(document.hidden) quietAudio(); });
 addEventListener('pagehide',quietAudio);
@@ -2447,6 +2507,13 @@ function countGame(){
 function adDue(){ const a=adState(); return !owns('noads') && a.games>=AD_GRACE && a.since>=AD_EVERY-1e-9 && Date.now()-a.last>=AD_GAP; }
 function gate(fn){ if(adDue()) showAd(fn); else fn(); }
 function nativeAds(){ return bridge('ads'); }
+// store pages and the phone's Settings open through the app ('app' service in App.tsx)
+const STORE_URL={ ios:'https://apps.apple.com/app/id6818896969', android:'https://play.google.com/store/apps/details?id=com.critterstack.app' };
+function openStorePage(review){
+  const ios=PLATFORM!=='android', url=ios ? STORE_URL.ios+(review?'?action=write-review':'') : STORE_URL.android+(review?'&showAllReviews=true':'');
+  if(!post('app',{type:'openURL', url})) window.open(url,'_blank');
+}
+function openPhoneSettings(){ if(!post('app',{type:'openSettings'})) toast('Open your phone\'s Settings › Notifications › Critter Stack'); }
 function showAd(next){
   const a=adState(); a.since=0; a.last=Date.now(); a.shown=(a.shown||0)+1; saveP();
   const after=()=>{ if(a.shown===1||a.shown%5===0) offerNoAds(next); else next(); };
@@ -2677,14 +2744,17 @@ function showStart(){
 }
 // Daily goal: a bobbing button by the logo (with a ! until it's done) opens today's goal and your streaks
 const GOAL_BTN=document.getElementById('goalBtn');
-function updateGoalBtn(){ const b=GOAL_BTN; if(!b) return; const done=goalDoneToday(); b.classList.toggle('done',done); b.querySelector('.dot').textContent=done?'✓':'!'; b.setAttribute('aria-label',done?"Today's goal: done":"Today's goal"); }
+// the red dot counts what's left today (the daily goal and the Daily Stack) and disappears once both are done
+function todayLeft(){ return (goalDoneToday()?0:1) + (PR.streak.last===tankKey()?0:1); }
+function updateGoalBtn(){ const b=GOAL_BTN; if(!b) return; const left=todayLeft(); b.classList.toggle('done',!left); b.querySelector('.dot').textContent=String(left);
+  b.setAttribute('aria-label',left?`Today: ${left} left to do`:"Today: all done"); }
 function showGoal(){
   const wrap=document.createElement('div'); wrap.className='today';
   const row=(label,text,state,done)=>{ const d=document.createElement('div'); const b=document.createElement('b'); b.textContent=label; const sp=document.createElement('span'); sp.textContent=text; const it=document.createElement('i'); it.textContent=state; if(done) it.className='done'; d.append(b,sp,it); return d; };
   const gd=goalDoneToday(), pt=PR.play.last===todayKey(), ds=PR.streak.last===tankKey();
   wrap.append(row('Goal',goalToday().name,gd?'Done ✓':'Today',gd), row('Played',playedText(),pt?'Today ✓':'',pt), row('Daily',streakText(),ds?'Played ✓':'',ds));
-  showOverlay({eyebrow:'Today', title: gd?'Goal complete! 🎉':'Daily goal', text: gd?'Nice work. A new goal arrives tomorrow.':'Finish it in any mode today. Goals count toward the Goal getter sticker.', extra:wrap, noRemember:true,
-    buttons:[{label:'Play Petting Zoo',cls:'big small',fn:()=>newGame('classic')},{label:'Back',cls:'big small ghost',fn:showStart}], back:showStart});
+  showOverlay({eyebrow:'Today', title: gd&&ds?'All done today! 🎉':gd?'Goal complete! 🎉':'Daily goal', text: gd&&ds?'Nice work. A new goal and a new Daily Stack arrive tomorrow.':gd?'Nice work. Play today\'s Daily Stack to finish the day.':'Finish it in any mode today. Goals count toward the Goal getter sticker.', extra:wrap, noRemember:true,
+    buttons:[gd&&!ds&&triesLeft()?{label:`Play Daily Stack #${dailyNum()}`,cls:'big small alt',fn:()=>newGame('daily')}:{label:'Play Petting Zoo',cls:'big small',fn:()=>newGame('classic')},{label:'Back',cls:'big small ghost',fn:showStart}], back:showStart});
 }
 
 /* ---------- overlay & side panels ---------- */
@@ -2719,7 +2789,7 @@ function showOverlay(o){
   if(typeof settingsOpen!=='undefined' && o.title!=='Settings') settingsOpen=false;
   updateHeader();
   if(overlay.hidden) ovShownAt=performance.now();
-  closeStickerPop(); overlay.hidden=false; overlay.querySelector('.card').scrollTop=0; fitCard();
+  closeStickerPop(); overlay.hidden=false; overlay.querySelector('.card').scrollTop=0; fitCard(); wakeCanvases(overlay);
 }
 function hideOverlay(){ overlay.hidden=true; updateHeader(); }
 function updateHeader(){ const h=document.documentElement, inGame=running&&!over; if(h.classList.contains('atmenu')===!inGame) return; h.classList.toggle('atmenu',!inGame); requestAnimationFrame(()=>{ if(typeof layout==='function') layout(); }); }
@@ -2756,6 +2826,17 @@ function openMenu(){
     text:`You have ${score.toLocaleString()} points and ${plural(rescued,'critter')} sent home so far.`,
     buttons:[{label:'Keep playing',cls:'big small',fn:closeMenu},{label:'End game',cls:'big small alt',fn:()=>endGame(false,true)},{label:'Main menu',cls:'big small ghost',fn:quitToMenu}] });
 }
+// Android Back button (the app sends it here): close a screen, open the pause menu in a game, or leave from the main menu
+let backAt=0;
+window.critterBack=()=>{
+  if(settingsOpen){ closeSettings(); return; }
+  if(!overlay.hidden&&!$('ovTop').hidden&&$('ovBack').onclick){ $('ovBack').onclick(); return; }
+  if(running&&!over){ if(menuOpen) closeMenu(); else openMenu(); return; }
+  if(!overlay.hidden&&$('ovEyebrow').classList.contains('welcome')){
+    if(Date.now()-backAt<2000) post('app',{type:'exit'}); else { backAt=Date.now(); toast('Press Back again to leave'); }
+    return; }
+  showStart();
+};
 function closeMenu(){
   menuOpen=false;
   if(view==='tank'){ paused=false; $('pauseBtn').textContent='Pause'; }
@@ -3520,7 +3601,7 @@ function openSettings(){
   const nmTx=document.createElement('span'); nmTx.textContent='Your name'; const nmSm=document.createElement('small'); nmTx.append(nmSm);
   if(gcAlias){ nmSm.textContent='From Game Center'; nmSm.className='keep';
     const nmV=document.createElement('b'); nmV.className='gcname'; nmV.textContent=gcAlias; nmRow.append(nmTx,nmV); }
-  else { nmSm.textContent='Leaderboards need Game Center sign-in (iPhone Settings › Game Center)'; nmSm.className='keep';
+  else { nmSm.textContent=cloudBoard()?'Shown on the leaderboards':'Leaderboards need Game Center sign-in (iPhone Settings › Game Center)'; nmSm.className='keep';
     const nmIn=document.createElement('input'); nmIn.id='setName'; nmIn.maxLength=14; nmIn.autocomplete='off'; nmIn.placeholder='Player'; const cur=getName(); nmIn.value=cur==='Player'?'':cur;
     guardName(nmIn,nmSm,v=>{ setName(v||'Player'); updateMePlate(); }); nmRow.append(nmTx,nmIn); }
   list.prepend(nmRow);
@@ -3558,7 +3639,12 @@ function openSettings(){
       SET.cloud=false; saveSet(); post('cloud',{type:'delete'}); dl.textContent='Deleted'; });
     cr.append(bn,rf,dl); wrapCloudRow=cr;
   }
-  const wrap=document.createElement('div'); wrap.append(list); if(wrapCloudRow){ wrap.append(wrapCloudRow); wrapCloudRow=null; } wrap.append(how,st,rsb); if(rsb._extra) wrap.append(rsb._extra);
+  // Rate the game: opens the store's review page (Apple doesn't allow its rating pop-up to be triggered by a button)
+  const rate=document.createElement('button'); rate.type='button'; rate.className='restore rate'; rate.textContent='⭐ Rate Critter Stack';
+  rate.addEventListener('click',()=>{ PR.rated=Date.now(); saveP(); openStorePage(true); });
+  const wrap=document.createElement('div'); wrap.append(list); if(wrapCloudRow){ wrap.append(wrapCloudRow); wrapCloudRow=null; } wrap.append(how,st);
+  if(bridge('app')) wrap.append(rate);
+  wrap.append(rsb); if(rsb._extra) wrap.append(rsb._extra);
   if(DEV){
     const dev=document.createElement('div'); dev.className='dev';
     const h=document.createElement('h3'); h.textContent='Developer tools'; const pp=document.createElement('p'); pp.textContent='For testing only. Removed from the final build. Replaces the progress saved on this device.';
@@ -3579,7 +3665,7 @@ function openSettings(){
     dev.append(h,pp,info,acts); wrap.append(dev);
   }
   showOverlay({eyebrow:'Critter Stack', title:'Settings', text:'', extra:wrap, noRemember:true,
-    buttons:[{label:'Done', cls:'big small', fn:closeSettings}]});
+    buttons:[{label:'Done', cls:'big small', fn:()=>closeSettings()}]});   // look closeSettings up when tapped: it's set just below
   settingsOpen=true; closeSettings=()=>{ settingsOpen=false; if(back) showOverlay(back); else { if(setPaused){ paused=false; $('pauseBtn').textContent='Pause'; } hideOverlay(); } };
 }
 let settingsOpen=false, closeSettings=()=>{}, wrapCloudRow=null;
@@ -3671,12 +3757,12 @@ window.critterPurchaseFailed=msg=>{ if(msg) toast(msg); };
 // current entitlements. Restoring the bundle brings back No Ads and the zoo, not the one-time 50+50 tokens.
 function restorePurchases(){
   const h=nativeStore();
-  if(h){ try{ h.postMessage({type:'restore'}); }catch(e){} toast('Checking your App Store purchases…'); return; }
+  if(h){ try{ h.postMessage({type:'restore'}); }catch(e){} toast(ANDROID_APP?'Checking your Google Play purchases…':'Checking your App Store purchases…'); return; }
   toast(DEV?'Dev build: restore runs through the App Store in the app':'Restore works in the Critter Stack app');
 }
 window.critterRestored=ids=>{
   ids=(ids||[]).filter(id=>PRODUCTS[id]&&['noads','zoo','bundle'].includes(PRODUCTS[id].kind));
-  if(!ids.length){ toast('No purchases to restore on this Apple ID'); return; }
+  if(!ids.length){ toast(ANDROID_APP?'No purchases to restore on this Google account':'No purchases to restore on this Apple ID'); return; }
   PR.owned=PR.owned||{};
   ids.forEach(id=>{ const k=PRODUCTS[id].kind; if(k==='bundle'){ PR.owned.noads=PR.owned.zoo=PR.owned.bundle=true; } else PR.owned[k]=true; });
   saveP(); buildZoo(); drawSide();
@@ -3687,7 +3773,7 @@ window.critterGrantSkips=n=>{ setSkips(skipsLeft()+(n|0)); };   // older native 
 let storeFocus=null, afterBuy=null;
 function buy(id){
   const h=nativeStore();
-  if(h){ h.postMessage({type:'purchase', productID:id}); toast('Opening the App Store…'); return; }
+  if(h){ h.postMessage({type:'purchase', productID:id}); toast(ANDROID_APP?'Opening Google Play…':'Opening the App Store…'); return; }
   if(DEV){ grant(id); toast('Test purchase (dev build, no charge)'); if(afterBuy){ const f=afterBuy; afterBuy=null; setTimeout(f,900); } return; }
   toast('Purchases open in the Critter Stack app');
 }
@@ -3851,10 +3937,9 @@ function parade(){
   const cv=document.createElement('canvas'); cv.className='parade'; cv.setAttribute('aria-hidden','true');
   const ctx=cv.getContext('2d'), types=['T','O','I','J','Z','L','S'];
   const walkers=[0,1,2].map(i=>({t:types[(Math.random()*7|0)], x:.1+i*.42, speed:.00007+Math.random()*.00004, ph:Math.random()*6}));
-  let lastT=performance.now(), away=0;
+  let lastT=performance.now();
   const loop=now=>{
-    // the menu card is sometimes taken out of the page for a moment while it's laid out again: wait for it (up to ~10 s) instead of stopping for good
-    if(!cv.isConnected){ if(++away<20) setTimeout(()=>requestAnimationFrame(loop),500); return; } away=0;
+    if(!liveCanvas(cv,loop)) return;   // off screen (e.g. Settings is open): sleep until the menu shows again
     const dt=Math.min(50,now-lastT); lastT=now;
     try{
     const d=Math.min(window.devicePixelRatio||1,2.5), W=cv.clientWidth, H=cv.clientHeight;
@@ -3869,15 +3954,25 @@ function parade(){
     }catch(e){ try{ ctx.restore(); }catch(_){} }   // one bad frame never stops the parade
     requestAnimationFrame(loop);
   };
+  cv.__wake=()=>{ lastT=performance.now(); requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
   return cv;
 }
+// Animated canvases on menu screens sleep while their screen is covered (Settings, the Store…) and are woken by
+// showOverlay when it comes back. Returns false while asleep. A short wait first, because the menu card is sometimes
+// taken out of the page for a moment while it's laid out again.
+function liveCanvas(cv,loop){
+  if(cv.isConnected){ cv.__away=0; cv.__asleep=false; return true; }
+  if((cv.__away=(cv.__away||0)+1)<4) setTimeout(()=>requestAnimationFrame(loop),250); else cv.__asleep=true;
+  return false;
+}
+function wakeCanvases(root){ root.querySelectorAll('canvas').forEach(cv=>{ if(cv.__asleep&&cv.__wake&&cv.isConnected){ cv.__asleep=false; cv.__away=0; cv.__wake(); } }); }
 // the name screen's critters hop and wave hello
 function helloLive(){
   const T=tallArt(), W=280,H=T?190:124,d=Math.min(window.devicePixelRatio||1,2.5), cv=document.createElement('canvas');
   cv.width=W*d; cv.height=H*d; cv.style.width=W+'px'; cv.style.height=H+'px'; cv.className='illus';
   const c=cv.getContext('2d');
-  let away=0; const loop=now=>{ if(!cv.isConnected){ if(++away<20) setTimeout(()=>requestAnimationFrame(loop),500); return; } away=0; try{
+  const loop=now=>{ if(!liveCanvas(cv,loop)) return; try{
     c.setTransform(d,0,0,d,0,0); const g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,'#2A1A63'); g.addColorStop(1,'#140A38'); c.fillStyle=g; rr(c,0,0,W,H,16); c.fill();
     [['L',T?52:56,0],['O',140,1],['J',T?228:222,2]].forEach(([t,x,i])=>{ const pc=makePiece(t,0), s=T?28:22, hop=Math.max(0,Math.sin(now/260-i*1.1))*(T?20:14);
       const wave=i===1?Math.sin(now/140)*.16:Math.sin(now/300+i)*.05;
@@ -3885,6 +3980,7 @@ function helloLive(){
       drawCells(c,pc.cells.map(k=>({...k,t,id:'h'+i})),s,0,0,{eye: hop>8?'happy':'open'}); c.restore(); });
     }catch(e){}
     requestAnimationFrame(loop); };
+  cv.__wake=()=>requestAnimationFrame(loop);
   requestAnimationFrame(loop); return cv;
 }
 function showNamePrompt(){

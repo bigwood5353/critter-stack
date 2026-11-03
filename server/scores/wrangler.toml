@@ -1,0 +1,17 @@
+# Critter Stack shared rankings: one worldwide board for iPhone and Android players.
+# Deploy:  npx.cmd wrangler deploy        (see server/scores/README.md)
+name = "critter-stack-scores"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+# https://scores.woodinteractive.app — Cloudflare creates the DNS record on the first deploy
+routes = [ { pattern = "scores.woodinteractive.app", custom_domain = true } ]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "critter-stack-scores"
+database_id = "REPLACE_WITH_DATABASE_ID"   # printed by: npx.cmd wrangler d1 create critter-stack-scores
+
+# daily clean-up of finished boards older than 60 days
+[triggers]
+crons = ["17 4 * * *"]

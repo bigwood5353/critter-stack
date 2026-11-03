@@ -16,6 +16,16 @@
       "autoIncrement": true,
       "ios": {
         "resourceClass": "medium"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
+    "android-test": {
+      "distribution": "internal",
+      "autoIncrement": false,
+      "android": {
+        "buildType": "apk"
       }
     }
   },
@@ -28,6 +38,10 @@
     "production": {
       "ios": {
         "ascAppId": "6818896969"
+      },
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
       }
     }
   }

@@ -1,0 +1,17 @@
+const {chromium}=require('playwright');
+const file=process.argv[2];
+(async()=>{ const b=await chromium.launch(); const p=await b.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+ await p.goto('file://'+file); await p.evaluate(()=>{ localStorage.clear(); localStorage.setItem('critterProgress',JSON.stringify({v:2,onboarded:1,games:3,unlocked:{challenge:1,pen:1},seenPzTour:1,seenPenTour:1,seenChIntro:1})); }); await p.reload(); await p.waitForTimeout(800);
+ const st=async(tag)=>{ const r=await p.evaluate(()=>{ const b=document.getElementById('goalBtn'), d=b.querySelector('.dot'); return {dot:d.textContent, shown:getComputedStyle(d).display!=='none', anim:getComputedStyle(b).animationName, label:b.getAttribute('aria-label')}; }); console.log(tag, JSON.stringify(r)); };
+ await st('fresh');
+ await p.evaluate(()=>{ const P=JSON.parse(localStorage.getItem('critterProgress')); const d=new Date(); P.goal={day:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),done:true}; localStorage.setItem('critterProgress',JSON.stringify(P)); }); await p.reload(); await p.waitForTimeout(800);
+ await st('goal done');
+ await p.evaluate(()=>document.getElementById('goalBtn').click()); await p.waitForTimeout(300);
+ console.log('  screen:', await p.evaluate(()=>document.getElementById('ovTitle').textContent+' | '+[...document.querySelectorAll('#overlay button')].map(b=>b.textContent).join(', ')));
+ await p.evaluate(()=>{ const P=JSON.parse(localStorage.getItem('critterProgress')); P.streak={count:1,last:new Date().toISOString().slice(0,10),best:1}; localStorage.setItem('critterProgress',JSON.stringify(P)); }); await p.reload(); await p.waitForTimeout(800);
+ await st('both done');
+ await p.evaluate(()=>document.getElementById('goalBtn').click()); await p.waitForTimeout(300);
+ console.log('  screen:', await p.evaluate(()=>document.getElementById('ovTitle').textContent+' | '+document.getElementById('ovText').textContent));
+ await p.evaluate(()=>{ const b=[...document.querySelectorAll('#overlay button')].find(b=>b.textContent==='Back'); b.click(); }); await p.waitForTimeout(400);
+ await p.screenshot({path:'goal-done.png',clip:{x:0,y:0,width:390,height:300}});
+ console.log('ERR',errs); await b.close(); })();

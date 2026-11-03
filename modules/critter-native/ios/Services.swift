@@ -43,8 +43,17 @@ final class NotificationService {
     func handle(type: String, body: [String: Any]) {
         switch type {
         case "requestPermission":
-            center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-                Task { @MainActor in self.bridge.call("critterNotifyResult", granted) }
+            // iOS shows its permission prompt only once. If the player said no before, only iPhone Settings can
+            // turn notifications back on, so tell the page ("denied") and it offers an Open Settings button.
+            let center = self.center
+            center.getNotificationSettings { settings in
+                let denied = settings.authorizationStatus == .denied
+                Task { @MainActor in
+                    if denied { self.bridge.call("critterNotifyResult", false, "denied"); return }
+                    center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                        Task { @MainActor in self.bridge.call("critterNotifyResult", granted) }
+                    }
+                }
             }
         case "schedule":
             let items = body["items"] as? [[String: Any]] ?? []
