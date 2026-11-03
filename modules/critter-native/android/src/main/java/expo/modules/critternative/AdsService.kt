@@ -52,10 +52,12 @@ class AdsService(private val bridge: GameBridge) {
   private val consent: ConsentInformation by lazy { UserMessagingPlatform.getConsentInformation(ctx) }
 
   /** Called once the page has loaded. */
+  /** Called each time the page has loaded, including after the app loads the game again: a fresh page knows
+   *  nothing about ads, so the test mode and "an ad is ready" are sent again. */
   fun start() {
-    if (started) return
-    started = true
     if (testMode) bridge.call("critterAdTestMode", true)   // testers see an ad early and often
+    if (started) { bridge.call("critterAdsReady", rewarded != null); return }
+    started = true
     gatherConsent {
       MobileAds.initialize(ctx) {
         bridge.main.post { sdkReady = true; loadInterstitial(); loadRewarded() }

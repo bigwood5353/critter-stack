@@ -58,6 +58,7 @@ public class CritterNativeModule: Module {
 final class GameBridge {
     private weak var module: CritterNativeModule?
     private var started = false
+    private var pageLoads = 0
 
     lazy var gameCenter = GameCenterService(bridge: self)
     lazy var store = StoreService(bridge: self)
@@ -85,6 +86,8 @@ final class GameBridge {
     }
 
     func pageReady() {
+        pageLoads += 1
+        if pageLoads > 1 { gameCenter.pageReloaded() }   // the app loaded the game again
         start()
         store.sendPrices()
         cloud.start()          // offers an iCloud backup to the page (fresh installs restore automatically)

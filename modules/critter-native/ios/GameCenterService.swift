@@ -27,6 +27,11 @@ final class GameCenterService: NSObject, GKGameCenterControllerDelegate {
         }
     }
 
+    /// The app loaded the game again (an iCloud restore): the fresh page needs the leaderboard name again.
+    func pageReloaded() {
+        if GKLocalPlayer.local.isAuthenticated { bridge.call("critterPlayer", ["alias": GKLocalPlayer.local.alias]) }
+    }
+
     func handle(type: String, body: [String: Any]) {
         switch type {
         case "submitScore":

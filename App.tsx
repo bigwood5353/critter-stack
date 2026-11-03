@@ -41,9 +41,10 @@ function Game() {
   // Loading the game again means a fresh WebView. WebKit's own reload() would fetch the page's address
   // (ORIGIN) from the internet, which isn't a real site, and shows "Error loading page".
   const [gen, setGen] = useState(0);
-  const reloadGame = useCallback(() => setGen(g => g + 1), []);
   const loaded = useRef(false);
   const queue = useRef<string[]>([]);
+  // until the new page has loaded, calls for it wait in the queue (the old page is gone)
+  const reloadGame = useCallback(() => { loaded.current = false; setGen(g => g + 1); }, []);
 
   // Run window.<fn>(...args) in the page. Calls that arrive before the page has loaded wait in a queue.
   const callPage = useCallback((fn: string, argsJSON: string) => {

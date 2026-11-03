@@ -54,15 +54,19 @@ final class AdsService: NSObject {
     private var rewardEarned = false
     private var showingRewarded = false
 
-    /// Called once the page has loaded (GameBridge.pageReady).
+    /// Called each time the page has loaded (GameBridge.pageReady), including after the app loads the game again
+    /// (an iCloud restore). A fresh page knows nothing about ads, so the test mode and "an ad is ready" are sent again.
     func start() {
-        guard !started else { return }
-        started = true
         #if DEBUG
         bridge.call("critterAdTestMode", true)
         #else
         if AdsService.isTestFlight { bridge.call("critterAdTestMode", true) }   // testers see an ad early and often
         #endif
+        guard !started else {
+            bridge.call("critterAdsReady", rewarded != nil)
+            return
+        }
+        started = true
         gatherConsent { [weak self] in
             guard let self else { return }
             self.requestTracking {
