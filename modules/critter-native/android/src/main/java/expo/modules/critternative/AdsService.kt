@@ -51,7 +51,6 @@ class AdsService(private val bridge: GameBridge) {
   private var loadingRewarded = false
   private val consent: ConsentInformation by lazy { UserMessagingPlatform.getConsentInformation(ctx) }
 
-  /** Called once the page has loaded. */
   /** Called each time the page has loaded, including after the app loads the game again: a fresh page knows
    *  nothing about ads, so the test mode and "an ad is ready" are sent again. */
   fun start() {
