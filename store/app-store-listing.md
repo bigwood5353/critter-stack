@@ -8,8 +8,9 @@ Live now: **1.0.1**. The metadata below is for the **next version (1.0.2)**; see
 | **Name** | Critter Stack: Block Puzzle | 27 / 30 |
 | **Subtitle** | Cute animals, falling blocks | 28 / 30 |
 | **Keywords** | `line,clear,drop,tile,brick,classic,stacker,brain,daily,relax,zoo,pet,cat,dog,frog,kawaii,offline` | 96 / 100 |
-| **Primary category** | Games › Puzzle | |
-| **Secondary category** | Games › Casual | |
+| **Primary category** | Games (already set) | |
+| **Game subcategories** | Puzzle, Casual (the two menus under Games) | 2 max |
+| **Secondary category** | Optional: leave empty, or Entertainment | |
 | **Age rating** | 4+ (answer the questionnaire; see `app-privacy-labels.md`) | |
 
 Was (1.0 – 1.0.1): Name "Critter Stack: Animal Puzzle", subtitle "Stack cute animals, clear rows", keywords
@@ -134,7 +135,8 @@ Promotional text can change any time.
 
 **C. Update the English (U.S.) listing** (version page, with **English (U.S.)** chosen at the top right)
 1. **App Information** (left sidebar, under General): change **Name** to `Critter Stack: Block Puzzle` and
-   **Subtitle** to `Cute animals, falling blocks`. Set **Secondary category** to **Casual**. Save.
+   **Subtitle** to `Cute animals, falling blocks`. Under **Category**, leave Primary as **Games** and set the two
+   game subcategories (just below it) to **Puzzle** and **Casual**. Secondary category is optional. Save.
    These fields belong to the app but are only sent with the next version.
 2. Back on the **1.0.2** page:
    - **Keywords:** paste `line,clear,drop,tile,brick,classic,stacker,brain,daily,relax,zoo,pet,cat,dog,frog,kawaii,offline`.
