@@ -233,6 +233,10 @@
   .starthere::after{ content:attr(data-tag); position:absolute; top:-12px; right:10px; font-size:12px; font-weight:700; letter-spacing:.02em; padding:3px 10px; border-radius:99px;
     background:#FFD60A; color:#20124D; box-shadow:0 2px 0 #20124D; pointer-events:none; animation:none; }
   @keyframes startGlow{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,214,10,.0), 0 5px 0 var(--line); } 50%{ box-shadow:0 0 0 6px rgba(255,214,10,.75), 0 5px 0 var(--line); } }
+  /* one-time tip for players who skipped the tutorial: Undo and Skip pulse for a few seconds */
+  .tipglow{ animation: tipGlow 1s ease-in-out 6; border-radius:14px; }
+  @keyframes tipGlow{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,214,10,0); } 50%{ box-shadow:0 0 0 6px rgba(255,214,10,.85); } }
+  @media (prefers-reduced-motion: reduce){ .tipglow{ animation:none; box-shadow:0 0 0 5px rgba(255,214,10,.85); } }
   @media (prefers-reduced-motion: reduce){ .starthere{ animation:none; box-shadow:0 0 0 5px rgba(255,214,10,.8), 0 5px 0 var(--line); } }
   @keyframes popIn{ from{ transform: scale(.55); opacity:0; } to{ transform:none; opacity:1; } }
   @media (prefers-reduced-motion: reduce){ .stk-pop .pop{ animation:none; } }
@@ -2333,7 +2337,18 @@ function setSkips(n){ PR.skips=Math.max(0,n|0); saveP(); updateSkipUI(); }
 function undosLeft(){ return PR.undos==null ? START_UNDOS : PR.undos; }
 function setUndos(n){ PR.undos=Math.max(0,n|0); saveP(); updateSkipUI(); }
 // the last critter placed, so Undo can lift it back to the top (not possible once rows have cleared)
-let lastPlaced=null;
+let lastPlaced=null, placedThisGame=0;
+// Players who skipped the tutorial never hear about Undo and Skip. Once, a few critters into their first
+// Petting Zoo or Challenge game, the two buttons pulse with a short tip. (The tutorial's "Skips, undos and lives"
+// step sets PR.tipSU, so players who saw it don't get the tip.)
+function skipUndoTip(){
+  if(PR.tipSU || view!=='tank' || mode==='daily' || over) return;
+  PR.tipSU=1; saveP();
+  toast('Tip: Skip ⏭ swaps this critter. Undo ↶ takes back your last one.');
+  const els=[...document.querySelectorAll('[data-act="undo"],[data-act="hold"],.tok[title="Skips"],.tok[title="Undos"]')].filter(e=>e.offsetParent);
+  els.forEach(e=>{ e.classList.remove('tipglow'); void e.offsetWidth; e.classList.add('tipglow'); });
+  setTimeout(()=>els.forEach(e=>e.classList.remove('tipglow')), 6500);
+}
 function doUndo(){
   if(!cur||clearing||view!=='tank') return;
   if(mode==='daily'){ toast('No undos in the Daily Stack. Pure skill!'); return; }
@@ -2387,6 +2402,7 @@ function lockPiece(){
   if(out){ lastPlaced=null; endGame(false); return; }
   const full=[]; for(let y=0;y<ROWS;y++) if(grid[y].every(Boolean)) full.push(y);
   lastPlaced = full.length ? {cleared:true} : {id, t:placedT, gold:placedGold, scoreBefore};
+  placedThisGame++; if(placedThisGame===4) skipUndoTip();
   if(full.length){
     clearing={rows:full,t:0};
     // habitat bonus: a critter goes home when its last square clears; all four at once = whole critter
@@ -2481,30 +2497,34 @@ function toast(msg){ toastQ.push(msg); if(toastQ.length===1) showToast(); }
 function showToast(){
   let t=document.querySelector('.toast'); if(!t){ t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); document.body.append(t); }
   t.textContent=toastQ[0]; t.hidden=false; clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>{ toastQ.shift(); if(toastQ.length) showToast(); else t.hidden=true; }, 2200);
+  toastTimer=setTimeout(()=>{ toastQ.shift(); if(toastQ.length) showToast(); else t.hidden=true; }, Math.max(2200, String(toastQ[0]).length*55));   // long tips stay up long enough to read
 }
 function copyShare(){
   const el=$('ovShare'), txt=el.textContent;
   const fallback=()=>{ const r=document.createRange(); r.selectNodeContents(el); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast('Selected. Copy it from the box'); };
   try{ navigator.clipboard.writeText(txt).then(()=>toast('Copied. Paste it anywhere'),fallback); }catch(e){ fallback(); }
 }
-/* ---------- ads: shown only between games ----------
-   8 counted games of grace, then an ad every 3 counted games with at least 3 minutes between ads.
-   Games under 45 seconds don't count; a puzzle attempt counts as a third of a game.
-   In the app a native handler at window.webkit.messageHandlers.ads shows a real interstitial
-   and calls window.critterAdDone() when it closes. */
-let AD_GRACE=8, AD_EVERY=3, AD_GAP=180000, AD_MIN_GAME=45000;
+/* ---------- ads: shown only between games, never during one ----------
+   Grace: no ads until 8 counted games or 10 minutes of play, whichever comes first.
+   After that an ad is due at the start of the next game once EITHER 3 counted games OR 5 minutes of play have
+   passed since the last ad (so long Petting Zoo games still get one), with at least 3 minutes between ads.
+   Games under 45 seconds don't count as games (their time still counts); a puzzle attempt counts as a third of a game.
+   In the app a native handler shows a real interstitial and calls window.critterAdDone(shown) when it closes:
+   shown=false means no ad was ready, so nothing is reset and the next game tries again. */
+let AD_GRACE=8, AD_GRACE_PLAY=600000, AD_EVERY=3, AD_MAX_PLAY=300000, AD_GAP=180000, AD_MIN_GAME=45000;
 // TestFlight builds: the app plays Google's test ads and calls this, so testers see an ad early and often.
 // App Store builds never call it and keep the real schedule above.
-window.critterAdTestMode=on=>{ if(on){ AD_GRACE=1; AD_EVERY=2; AD_GAP=30000; AD_MIN_GAME=10000; } };
+window.critterAdTestMode=on=>{ if(on){ AD_GRACE=1; AD_GRACE_PLAY=60000; AD_EVERY=2; AD_MAX_PLAY=60000; AD_GAP=30000; AD_MIN_GAME=10000; } };
 let gameStart=0;
-function adState(){ return PR.ads||(PR.ads={games:0,since:0,last:0,shown:0}); }
+// games/since: counted games in total / since the last ad; play/total: milliseconds played since the last ad / in total
+function adState(){ const a=PR.ads||(PR.ads={games:0,since:0,last:0,shown:0}); if(a.play==null) a.play=0; if(a.total==null) a.total=0; return a; }
 function countGame(){
   if(!gameStart) return; const a=adState(), dur=Date.now()-gameStart; gameStart=0;
   const k = mode==='levels' ? 1/3 : (dur>=AD_MIN_GAME ? 1 : 0);
-  a.games+=k; a.since+=k; saveP();
+  a.games+=k; a.since+=k; a.play+=dur; a.total+=dur; saveP();
 }
-function adDue(){ const a=adState(); return !owns('noads') && a.games>=AD_GRACE && a.since>=AD_EVERY-1e-9 && Date.now()-a.last>=AD_GAP; }
+function adGraceOver(){ const a=adState(); return a.games>=AD_GRACE || a.total>=AD_GRACE_PLAY; }
+function adDue(){ const a=adState(); return !owns('noads') && adGraceOver() && (a.since>=AD_EVERY-1e-9 || a.play>=AD_MAX_PLAY) && Date.now()-a.last>=AD_GAP; }
 function gate(fn){ if(adDue()) showAd(fn); else fn(); }
 function nativeAds(){ return bridge('ads'); }
 // store pages and the phone's Settings open through the app ('app' service in App.tsx)
@@ -2515,10 +2535,13 @@ function openStorePage(review){
 }
 function openPhoneSettings(){ if(!post('app',{type:'openSettings'})) toast('Open your phone\'s Settings › Notifications › Critter Stack'); }
 function showAd(next){
-  const a=adState(); a.since=0; a.last=Date.now(); a.shown=(a.shown||0)+1; saveP();
+  const a=adState();
+  // only an ad that actually played resets the schedule
+  const played=()=>{ a.since=0; a.play=0; a.last=Date.now(); a.shown=(a.shown||0)+1; saveP(); };
   const after=()=>{ if(a.shown===1||a.shown%5===0) offerNoAds(next); else next(); };
   const h=nativeAds();
-  if(h){ window.critterAdDone=()=>{ window.critterAdDone=null; after(); }; h.postMessage({type:'showInterstitial'}); return; }
+  if(h){ window.critterAdDone=shown=>{ window.critterAdDone=null; if(shown===false){ next(); return; } played(); after(); }; h.postMessage({type:'showInterstitial'}); return; }
+  played();
   // stand-in ad for the web build: a 5-second countdown, then it can be closed
   const box=document.createElement('div'); box.className='ad-box';
   const inner=document.createElement('div'); inner.innerHTML='<b>Your ad here</b><small>A real ad plays here in the app</small>';
@@ -2683,7 +2706,7 @@ function dailyIntro(){
     back: running&&!over ? null : ()=>showStart() });
 }
 function startGame(m){
-  mode=m||mode; markPlayed(); gameStart=Date.now(); lastPlaced=null;
+  mode=m||mode; markPlayed(); gameStart=Date.now(); lastPlaced=null; placedThisGame=0;
   if(mode==='daily'){ dailyState().tries++; saveP(); }
   const tankAtStart = mode==='daily' ? tankKey() : null;
   if(mode==='levels'){ newLevel(levelIdx); return; }
@@ -3658,10 +3681,10 @@ function openSettings(){
       mk('Give 3 more Daily tries','alt',b=>{ dailyState().tries=0; saveP(); b.textContent='Daily tries reset ✓'; }),
       mk('Refill lives','alt',b=>{ PR.lives={n:LIVES_MAX,at:0}; saveP(); updateLivesPills(); b.textContent='Lives full ✓'; }),
       mk('Empty lives','ghost',b=>{ PR.lives={n:0,at:Date.now()}; PR.livesUntil=0; saveP(); updateLivesPills(); b.textContent='Lives empty ✓'; }),
-      mk('Show an ad before the next game','alt',b=>{ const a=adState(); a.games=Math.max(a.games,AD_GRACE); a.since=AD_EVERY; a.last=0; saveP(); b.textContent='Next game starts with an ad ✓'; }),
+      mk('Show an ad before the next game','alt',b=>{ const a=adState(); a.games=Math.max(a.games,AD_GRACE); a.since=AD_EVERY; a.play=AD_MAX_PLAY; a.last=0; saveP(); b.textContent='Next game starts with an ad ✓'; }),
       mk('Reset all progress','ghost',b=>{ if(!armed){ armed=true; b.textContent='Tap again to erase everything'; return; } resetAll(); })
     );
-    const ad=adState(), info=document.createElement('p'); info.textContent= owns('noads') ? 'Ads: off (No Ads owned).' : ad.games<AD_GRACE ? `Ads: ${Math.floor(ad.games)} of ${AD_GRACE} free games played.` : `Ads: ${ad.shown||0} shown so far · next after ${Math.max(0,Math.ceil(AD_EVERY-ad.since))} more game(s).`;
+    const ad=adState(), info=document.createElement('p'); info.textContent= owns('noads') ? 'Ads: off (No Ads owned).' : !adGraceOver() ? `Ads: ${Math.floor(ad.games)} of ${AD_GRACE} free games, ${Math.floor(ad.total/60000)} of ${AD_GRACE_PLAY/60000} free minutes played.` : `Ads: ${ad.shown||0} shown so far · next after ${Math.max(0,Math.ceil(AD_EVERY-ad.since))} more game(s) or ${Math.max(0,Math.ceil((AD_MAX_PLAY-ad.play)/60000))} more minute(s) of play.`;
     dev.append(h,pp,info,acts); wrap.append(dev);
   }
   showOverlay({eyebrow:'Critter Stack', title:'Settings', text:'', extra:wrap, noRemember:true,
@@ -4104,6 +4127,7 @@ function highlightStart(){
 }
 function showTutorial(i,opts={}){
   const st=TUT[i], last=i===TUT.length-1;
+  if(st.art==='tokens' && !PR.tipSU){ PR.tipSU=1; saveP(); }   // they've read about Undo and Skip
   const wrap=document.createElement('div'); wrap.className='tut';
   const dots=document.createElement('div'); dots.className='dots'; dots.setAttribute('aria-label',`Step ${i+1} of ${TUT.length}`);
   TUT.forEach((_,j)=>{ const d=document.createElement('span'); if(j===i) d.className='on'; dots.append(d); });

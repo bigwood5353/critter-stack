@@ -10,8 +10,10 @@ import UserMessagingPlatform
 /// Ads for Critter Stack, using Google AdMob (Google Mobile Ads SDK 12 and Google's User Messaging Platform).
 ///
 /// Two kinds of ads:
-///  • Interstitial between games. The page sends {type:'showInterstitial'} and waits for window.critterAdDone().
-///    critterAdDone is ALWAYS called: when the ad closes, when it fails, or when no ad is loaded.
+///  • Interstitial between games. The page sends {type:'showInterstitial'} and waits for window.critterAdDone(shown).
+///    critterAdDone is ALWAYS called: critterAdDone(true) when an ad played and closed, critterAdDone(false) when no ad
+///    was ready or it failed to play (the page then keeps the ad due and tries again before the next game).
+///    A failed load is retried every minute, and an ad older than 55 minutes is replaced (AdMob ads expire after an hour).
 ///  • Rewarded ("watch an ad for +1 life, skip or undo", up to 5 a day). The page sends {type:'showRewarded', reward}.
 ///    window.critterRewarded(reward) is called only when AdMob reports the reward was earned (the whole ad was watched);
 ///    window.critterRewardFailed(message) is called if no ad is ready or the player closes it early.
@@ -53,6 +55,10 @@ final class AdsService: NSObject {
     private var pendingReward: String?
     private var rewardEarned = false
     private var showingRewarded = false
+    private var loadingInterstitial = false
+    private var interstitialLoadedAt = Date.distantPast
+    private var rewardedLoadedAt = Date.distantPast
+    private static let adLifetime: TimeInterval = 55 * 60   // AdMob ads expire an hour after loading
 
     /// Called each time the page has loaded (GameBridge.pageReady), including after the app loads the game again
     /// (an iCloud restore). A fresh page knows nothing about ads, so the test mode and "an ad is ready" are sent again.
@@ -83,13 +89,17 @@ final class AdsService: NSObject {
     func handle(type: String, body: [String: Any]) {
         switch type {
         case "showInterstitial":
+            if interstitial != nil, Date().timeIntervalSince(interstitialLoadedAt) > AdsService.adLifetime {
+                interstitial = nil                      // expired: fetch a fresh one for the next game
+            }
             guard let ad = interstitial, let root = bridge.rootViewController else {
-                bridge.call("critterAdDone"); loadInterstitial(); return
+                bridge.call("critterAdDone", false); loadInterstitial(); return
             }
             ad.fullScreenContentDelegate = self
             ad.present(from: root.presentedViewController ?? root)
         case "showRewarded":
             let reward = (body["reward"] as? String) ?? "skip"
+            if rewarded != nil, Date().timeIntervalSince(rewardedLoadedAt) > AdsService.adLifetime { rewarded = nil }
             guard let ad = rewarded, let root = bridge.rootViewController else {
                 bridge.call("critterRewardFailed", "No ad is available right now. Try again in a bit.")
                 loadRewarded(); return
@@ -110,9 +120,19 @@ final class AdsService: NSObject {
     }
 
     private func loadInterstitial() {
-        guard canRequestAds else { return }
+        guard canRequestAds, !loadingInterstitial, interstitial == nil else { return }
+        loadingInterstitial = true
         InterstitialAd.load(with: interstitialUnit, request: Request()) { [weak self] ad, _ in
-            Task { @MainActor in self?.interstitial = ad }
+            Task { @MainActor in
+                guard let self else { return }
+                self.loadingInterstitial = false
+                self.interstitial = ad
+                self.interstitialLoadedAt = Date()
+                if ad == nil {       // no fill: try again in a minute
+                    try? await Task.sleep(nanoseconds: 60_000_000_000)
+                    self.loadInterstitial()
+                }
+            }
         }
     }
 
@@ -122,6 +142,7 @@ final class AdsService: NSObject {
             Task { @MainActor in
                 guard let self else { return }
                 self.rewarded = ad
+                self.rewardedLoadedAt = Date()
                 self.bridge.call("critterAdsReady", ad != nil)
                 if ad == nil {       // no fill: try again in a minute
                     try? await Task.sleep(nanoseconds: 60_000_000_000)
@@ -170,7 +191,7 @@ final class AdsService: NSObject {
     func start() { bridge.call("critterAdsReady", false) }
     func handle(type: String, body: [String: Any]) {
         switch type {
-        case "showInterstitial": bridge.call("critterAdDone")
+        case "showInterstitial": bridge.call("critterAdDone", false)
         case "showRewarded": bridge.call("critterRewardFailed", "Ads aren't available in this build.")
         default: break
         }
@@ -195,7 +216,7 @@ extension AdsService: FullScreenContentDelegate {
             pendingReward = nil; rewardEarned = false
             rewarded = nil; loadRewarded()                  // each ad plays once; get the next one ready
         } else {
-            bridge.call("critterAdDone")                    // the game waits for this before the next round
+            bridge.call("critterAdDone", !failed)           // the game waits for this before the next round
             interstitial = nil; loadInterstitial()
         }
     }

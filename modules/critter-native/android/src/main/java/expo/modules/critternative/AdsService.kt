@@ -18,7 +18,9 @@ import org.json.JSONObject
 
 /**
  * Google AdMob for Android. Same contract with the page as iOS:
- *  • Interstitial between games: page sends {type:'showInterstitial'}; window.critterAdDone() is ALWAYS called afterwards.
+ *  • Interstitial between games: page sends {type:'showInterstitial'}; window.critterAdDone(shown) is ALWAYS called afterwards
+ *    (true when an ad played, false when none was ready or it failed, so the page tries again before the next game).
+ *    Failed loads retry every minute; ads older than 55 minutes are replaced (AdMob ads expire after an hour).
  *  • Rewarded: {type:'showRewarded', reward}; critterRewarded(reward) only when the whole ad was watched, else critterRewardFailed(msg).
  * Order at launch: Google's consent form where the law needs one (EU/UK) → start the SDK → preload one of each.
  *
@@ -32,6 +34,7 @@ class AdsService(private val bridge: GameBridge) {
     private const val MY_REWARDED = "ca-app-pub-4757265288772810/XXXXXXXXXX"       // Critter Stack Android · Free life, skip or turn
     private const val TEST_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712"
     private const val TEST_REWARDED = "ca-app-pub-3940256099942544/5224354917"
+    private const val AD_LIFETIME_MS = 55 * 60 * 1000L
   }
 
   private val ctx = bridge.context
@@ -49,6 +52,8 @@ class AdsService(private val bridge: GameBridge) {
   private var rewarded: RewardedAd? = null
   private var loadingInterstitial = false
   private var loadingRewarded = false
+  private var interstitialAt = 0L
+  private var rewardedAt = 0L
   private val consent: ConsentInformation by lazy { UserMessagingPlatform.getConsentInformation(ctx) }
 
   /** Called each time the page has loaded, including after the app loads the game again: a fresh page knows
@@ -85,8 +90,11 @@ class AdsService(private val bridge: GameBridge) {
     if (!canRequestAds || loadingInterstitial || interstitial != null) return
     loadingInterstitial = true
     InterstitialAd.load(ctx, interstitialUnit, AdRequest.Builder().build(), object : InterstitialAdLoadCallback() {
-      override fun onAdLoaded(ad: InterstitialAd) { loadingInterstitial = false; interstitial = ad }
-      override fun onAdFailedToLoad(error: LoadAdError) { loadingInterstitial = false; interstitial = null }
+      override fun onAdLoaded(ad: InterstitialAd) { loadingInterstitial = false; interstitial = ad; interstitialAt = System.currentTimeMillis() }
+      override fun onAdFailedToLoad(error: LoadAdError) {
+        loadingInterstitial = false; interstitial = null
+        bridge.main.postDelayed({ loadInterstitial() }, 60_000)   // no fill: try again in a minute
+      }
     })
   }
 
@@ -95,7 +103,7 @@ class AdsService(private val bridge: GameBridge) {
     if (loadingRewarded || rewarded != null) return
     loadingRewarded = true
     RewardedAd.load(ctx, rewardedUnit, AdRequest.Builder().build(), object : RewardedAdLoadCallback() {
-      override fun onAdLoaded(ad: RewardedAd) { loadingRewarded = false; rewarded = ad; bridge.call("critterAdsReady", true) }
+      override fun onAdLoaded(ad: RewardedAd) { loadingRewarded = false; rewarded = ad; rewardedAt = System.currentTimeMillis(); bridge.call("critterAdsReady", true) }
       override fun onAdFailedToLoad(error: LoadAdError) {
         loadingRewarded = false; rewarded = null; bridge.call("critterAdsReady", false)
         bridge.main.postDelayed({ loadRewarded() }, 60_000)   // no fill: try again in a minute
@@ -104,18 +112,20 @@ class AdsService(private val bridge: GameBridge) {
   }
 
   private fun showInterstitial() {
+    if (interstitial != null && System.currentTimeMillis() - interstitialAt > AD_LIFETIME_MS) interstitial = null   // expired
     val ad = interstitial
     val activity = bridge.activity
-    if (ad == null || activity == null) { bridge.call("critterAdDone"); loadInterstitial(); return }
+    if (ad == null || activity == null) { bridge.call("critterAdDone", false); loadInterstitial(); return }
     interstitial = null
     ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-      override fun onAdDismissedFullScreenContent() { bridge.call("critterAdDone"); loadInterstitial() }
-      override fun onAdFailedToShowFullScreenContent(error: AdError) { bridge.call("critterAdDone"); loadInterstitial() }
+      override fun onAdDismissedFullScreenContent() { bridge.call("critterAdDone", true); loadInterstitial() }
+      override fun onAdFailedToShowFullScreenContent(error: AdError) { bridge.call("critterAdDone", false); loadInterstitial() }
     }
     ad.show(activity)
   }
 
   private fun showRewarded(reward: String) {
+    if (rewarded != null && System.currentTimeMillis() - rewardedAt > AD_LIFETIME_MS) rewarded = null   // expired
     val ad = rewarded
     val activity = bridge.activity
     if (ad == null || activity == null) {
